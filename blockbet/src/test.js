@@ -44,13 +44,39 @@ const Test = () => {
                     placeholder="Enter bet amount"
                 />
                 <button onClick={placeBet}>Place Bet</button>
-                <p> Bet list</p>
-                <p> Oracle list</p>
-                <p> oracle action</p>
-                <p> Bet list</p>
+            </div>
+            <div>
+                <h3> Bet list</h3>
+                <p>ID   Amount   Description               Position Status</p>
+                <p>34   1000 w   Will this website work?   True     active</p>
+                <p>23   1000 w   Will this website work?   True     waiting</p>
+                <p></p>
+                <input
+                    type="text"
+                    value={BetID}
+                    placeholder="Enter bet ID"
+                />
+                <button onClick={acceptBet}>Accept Bet</button>
+                <button onClick={rejectBet}>Reject Bet</button>
+                <h3> Oracle list</h3>
+                <p>ID   Description                     Status</p>
+                <p>65   Will I get an A in Microarch?   response needed</p>
+                <p>23   Will this website work?         waiting</p>
+                <p></p>
+                <input
+                    type="text"
+                    value={BetIDOracle}
+                    placeholder="Enter bet ID"
+                />
+                <input
+                    type="text"
+                    value={BetResult}
+                    placeholder="Enter bet result"
+                />
+                <button onClick={postResult}>postResult</button>
+                <p></p>
             </div>
         </div>
-
 
     )
 }
