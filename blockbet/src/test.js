@@ -2,11 +2,37 @@ import React from "react"
 import { useState } from "react";
 const Test = () => {
     const [betAmount, setBetAmount] = useState('');
+    const [betDes, setBetDes] = useState('');
+    const [betRecipient, setRecipient] = useState('');
+    const [oracleAdress, setOracleAddress] = useState('');
+
     const [walletAddress, setWalletAddress] = useState('');
+    const [BetID, setBetID] = useState('');
+    const [BetIDOracle, setBetIDOracle] = useState('');
+    const [BetResult, setBetResult] = useState('');
+
 
     const handleBetAmountChange = (event) => {
         setBetAmount(event.target.value);
     };
+    const handleBetDesChange = (event) => {
+        setBetDes(event.target.value);
+    };
+    const handleBetRecipientChange = (event) => {
+        setRecipient(event.target.value);
+    };
+    const handleOracleAddressChange = (event) => {
+        setOracleAddress(event.target.value);
+    };
+
+    const acceptBet = () => {
+    };
+    const rejectBet = () => {
+    };
+    const postResult = () => {
+    };
+
+
 
     const placeBet = () => {
         // Here you would handle the bet placement logic
@@ -36,6 +62,7 @@ const Test = () => {
                 <button onClick={connectMetaMask}>Connect to MetaMask</button>
                 {walletAddress && <p>Connected Wallet: {walletAddress}</p>}
             </div>
+            <h3>Create Bet</h3>
             <div>
                 <input
                     type="text"
@@ -43,11 +70,38 @@ const Test = () => {
                     onChange={handleBetAmountChange}
                     placeholder="Enter bet amount"
                 />
+            </div>
+            <div>
+                <input
+                    type="text"
+                    value={betDes}
+                    onChange={handleBetDesChange}
+                    placeholder="Enter bet description"
+                />
+            </div>
+            <div>
+                <input
+                    type="text"
+                    value={betRecipient}
+                    onChange={handleBetRecipientChange}
+                    placeholder="Enter participant address"
+                />
+            </div>
+            <div>
+                <input
+                    type="text"
+                    value={oracleAdress}
+                    onChange={handleOracleAddressChange}
+                    placeholder="Enter oracle address"
+                />
+            </div>
+
+            <div>
                 <button onClick={placeBet}>Place Bet</button>
             </div>
             <div>
                 <h3> Bet list</h3>
-                <p>ID   Amount   Description               Position Status</p>
+                <p>ID   Amount &nbsp;Description Position Status</p>
                 <p>34   1000 w   Will this website work?   True     active</p>
                 <p>23   1000 w   Will this website work?   True     waiting</p>
                 <p></p>
