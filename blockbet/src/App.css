@@ -2,6 +2,23 @@
   text-align: center;
 }
 
+.App-bg-color {
+  background-color: white;
+}
+
+.title {
+  font-size: 40px;
+  /* Example size */
+  color: #322f2f;
+  /* Adjust color as needed */
+  margin-bottom: 20px;
+}
+
+.my-custom-button {
+  padding: 10px 20px;
+  font-size: 8px;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -32,6 +49,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
