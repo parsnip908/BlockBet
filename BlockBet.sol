@@ -8,6 +8,7 @@ contract BlockBet {
     uint constant STATUS_WIN = 1;
     uint constant STATUS_LOSE = 2;
     uint constant STATUS_PENDING = 3;
+    uint constant STATUS_NOT_PENDING = 4;
 
     //game status
     uint constant STATUS_NOT_STARTED = 1;
@@ -15,22 +16,25 @@ contract BlockBet {
     uint constant STATUS_COMPLETE = 3;
 
     //general status
-    uint constant STATUS_ERROR = 4;
+    uint constant STATUS_ERROR = 5;
 
     //bet outcome status
     uint constant STATUS_NOT_SET = 0;
     uint constant STATUS_TRUE = 1;
     uint constant STATUS_FALSE = 2;
 
+    //1 ether value, change to MIS later
+    uint256 constant amount = 1000000000000000000;
+
     //structures
     struct BetterBet {
         uint guess; //1 for true, 2 for false
         address payable addr;
         uint status;
+        uint256 betAmount;
     }
 
     struct Game {
-        uint256 betAmount;
         uint outcome;
         uint status;
         BetterBet originator;
@@ -38,6 +42,10 @@ contract BlockBet {
         address oracle;
         string betDescription;
     }
+
+    uint256 public betInd = 0;
+    uint256 public constant arraySize = 65536;
+    Game[arraySize] public games;
 
     //the game
     Game game;
@@ -53,117 +61,125 @@ contract BlockBet {
         owner = msg.sender;
     }
 
-    function createBet(uint _guess, address _oracle, string memory _betDescription, address _takerAddr) public payable {
-        game = Game(msg.value, STATUS_NOT_SET, STATUS_STARTED, BetterBet(_guess, payable(msg.sender), STATUS_PENDING), BetterBet(0, payable(_takerAddr), STATUS_NOT_STARTED), _oracle, _betDescription);
-        game.originator = BetterBet(_guess, payable(msg.sender), STATUS_PENDING);
+    function createBet(uint _guess, address _oracle, string memory _betDescription, address _takerAddr, uint256 takerBetAmount) public payable {    //guess 1(true) 2(false)
+        require(_guess == STATUS_TRUE || _guess == STATUS_FALSE);
+        uint256 tempAmount = takerBetAmount*amount;
+        game = Game(STATUS_NOT_SET, STATUS_STARTED, BetterBet(_guess, payable(msg.sender), STATUS_PENDING, msg.value), BetterBet(0, payable(_takerAddr), STATUS_NOT_PENDING, tempAmount), _oracle, _betDescription);
+        game.originator = BetterBet(_guess, payable(msg.sender), STATUS_PENDING, msg.value);
+        games[betInd] = game;
+        betInd = betInd + 1;
     }
 
-    function takeBet() public payable {
-        require(msg.value == game.betAmount && msg.sender == game.taker.addr);
+    function takeBet(uint256 betID) public payable {
+        require(msg.value == games[betID].taker.betAmount && msg.sender == games[betID].taker.addr);
         uint takerGuess;
-        if(game.originator.guess == STATUS_TRUE){
+        if(games[betID].originator.guess == STATUS_TRUE){
             takerGuess = STATUS_FALSE;
         }else{
             takerGuess = STATUS_TRUE;
         }
-        game.taker = BetterBet(takerGuess, payable(msg.sender), STATUS_PENDING);
+        games[betID].taker = BetterBet(takerGuess, payable(msg.sender), STATUS_PENDING, msg.value);
     }
 
-    function setBetOutcome(uint _outcome) public {
-        require(msg.sender == game.oracle);
-        game.outcome = _outcome;    //set to 1(true) or 2(false)
-        game.status = STATUS_COMPLETE;
+    function denyBet(uint256 betID) public payable {
+        require(msg.sender == games[betID].taker.addr);
+        games[betID].originator.addr.transfer(games[betID].originator.betAmount);
+    }
 
-        if(game.originator.guess == game.outcome && game.taker.guess != game.outcome){
-            game.originator.status = STATUS_WIN;
-            game.taker.status = STATUS_LOSE;
-        }else if(game.originator.guess != game.outcome && game.taker.guess == game.outcome){
-            game.originator.status = STATUS_LOSE;
-            game.taker.status = STATUS_WIN;
+    function setBetOutcome(uint256 betID, uint _outcome) public {
+        require(msg.sender == games[betID].oracle);
+        require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING);
+        games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
+        games[betID].status = STATUS_COMPLETE;
+
+        if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome){
+            games[betID].originator.status = STATUS_WIN;
+            games[betID].taker.status = STATUS_LOSE;
+        }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome){
+            games[betID].originator.status = STATUS_LOSE;
+            games[betID].taker.status = STATUS_WIN;
         }else{
-            game.originator.status = STATUS_ERROR;
-            game.taker.status = STATUS_ERROR;
-            game.status = STATUS_ERROR;
+            games[betID].originator.status = STATUS_ERROR;
+            games[betID].taker.status = STATUS_ERROR;
+            games[betID].status = STATUS_ERROR;
         }
     }
 
-    function payout() public payable {
-        // checkPermissions(msg.sender);
-        require(msg.sender == game.oracle);
-        if(game.originator.status == STATUS_WIN) {
-            game.originator.addr.transfer(game.betAmount*2);
-        }else if(game.taker.status == STATUS_WIN) {
-            game.taker.addr.transfer(game.betAmount*2);
+    function payout(uint256 betID) public payable {
+        require(msg.sender == games[betID].oracle);
+        require(games[betID].status == STATUS_COMPLETE);
+        if(games[betID].originator.status == STATUS_WIN) {
+            games[betID].originator.addr.transfer(games[betID].originator.betAmount + games[betID].taker.betAmount);
+        }else if(games[betID].taker.status == STATUS_WIN) {
+            games[betID].taker.addr.transfer(games[betID].originator.betAmount + games[betID].taker.betAmount);
         }else{
-            game.originator.addr.transfer(game.betAmount);
-            game.taker.addr.transfer(game.betAmount);
+            games[betID].originator.addr.transfer(games[betID].originator.betAmount);
+            games[betID].taker.addr.transfer(games[betID].originator.betAmount);
         }
     }
 
-    function checkPermissions(address sender) view private {
+    function nullBet(uint256 betID) public payable {   //currently only oracle can nullify bet, need to figure out frontend logistics on voting to nulltify bet
+        require(msg.sender == games[betID].oracle);
+        games[betID].originator.addr.transfer(games[betID].originator.betAmount);
+        games[betID].taker.addr.transfer(games[betID].originator.betAmount);
+    }
+
+    function checkPermissions(uint256 betID, address sender) view private {
         //only the originator, taker, or oracle can call this function
-        require(sender == game.originator.addr || sender == game.taker.addr || sender == game.oracle);
+        require(sender == games[betID].originator.addr || sender == games[betID].taker.addr || sender == games[betID].oracle);
     }
 
-    function getBetAmount() public view returns (uint) {
-        checkPermissions(msg.sender);
-        return game.betAmount;
+    function getBetAmounts(uint256 betID) public view returns (uint256, uint256) {
+        checkPermissions(betID, msg.sender);
+        return (games[betID].originator.betAmount, games[betID].originator.betAmount);
     }
-    function getBetDescription() public view returns (string memory) {
-        checkPermissions(msg.sender);
-        return game.betDescription;
-    }
-
-    function getOriginatorAddress() public view returns (address) {
-        checkPermissions(msg.sender);
-        return game.originator.addr;
-    }
-    function getTakerAddress() public view returns (address) {
-        checkPermissions(msg.sender);
-        return game.taker.addr;
-    }
-    function getOracleAddress() public view returns (address) {
-        checkPermissions(msg.sender);
-        return game.oracle;
+    function getBetDescription(uint256 betID) public view returns (string memory) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].betDescription;
     }
 
-    function getOriginatorGuess() public view returns (uint) {
-        checkPermissions(msg.sender);
-        return game.originator.guess;
+    function getOriginatorAddress(uint256 betID) public view returns (address) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].originator.addr;
     }
-    function getTakerGuess() public view returns (uint) {
-        checkPermissions(msg.sender);
-        return game.taker.guess;
+    function getTakerAddress(uint256 betID) public view returns (address) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].taker.addr;
+    }
+    function getOracleAddress(uint256 betID) public view returns (address) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].oracle;
     }
 
-    // function convertBoolToString(bool input) internal pure returns (string memory) {
-    //     if (input) {
-    //         return "true";
-    //     } else {
-    //         return "false";
-    //     }
-    // }
+    function getOriginatorGuess(uint256 betID) public view returns (uint) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].originator.guess;
+    }
+    function getTakerGuess(uint256 betID) public view returns (uint) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].taker.guess;
+    }
 
     //returns - [<description>, <outcome>, 'originator', <originator status>, 'taker', <taker status>]
-    function getBetOutcome() public view returns (string memory description, string memory outcome, string memory originatorKey, uint originatorStatus, string memory takerKey, uint takerStatus) {
-        if(game.originator.status == STATUS_WIN && game.taker.status == STATUS_LOSE) {
+    function getBetOutcome(uint256 betID) public view returns (string memory description, string memory outcome, string memory originatorKey, uint originatorStatus, string memory takerKey, uint takerStatus) {
+        if(games[betID].originator.status == STATUS_WIN && games[betID].taker.status == STATUS_LOSE) {
             description = "Bet originator has won the bet";
-        }else if(game.originator.status == STATUS_LOSE && game.taker.status == STATUS_WIN) {
+        }else if(games[betID].originator.status == STATUS_LOSE && games[betID].taker.status == STATUS_WIN) {
             description = "Bet taker has won the bet";
         }else{
             description = "Unknown Bet Outcome";
         }
 
-        if(game.outcome == STATUS_TRUE){
+        if(games[betID].outcome == STATUS_TRUE){
             outcome = "True";
-        }else if (game.outcome == STATUS_FALSE){
+        }else if (games[betID].outcome == STATUS_FALSE){
             outcome = "False";
         }else{
             outcome = "Unknown Game Outcome";
         }
         originatorKey = "originator";
-        originatorStatus = game.originator.status;
+        originatorStatus = games[betID].originator.status;
         takerKey = "taker";
-        takerStatus = game.taker.status;
+        takerStatus = games[betID].taker.status;
     }
 }
