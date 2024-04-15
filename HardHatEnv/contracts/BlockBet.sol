@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
+import "./console.sol";
+
 contract BlockBet {
     address public owner;   //owner of blockbet contract address, currently serves no purpose
     
-    //bet status
+    //BetterBet status
     uint constant STATUS_WIN = 1;
     uint constant STATUS_LOSE = 2;
     uint constant STATUS_PENDING = 3;
     uint constant STATUS_NOT_PENDING = 4;
 
     //game status
+    uint constant STATUS_VOIDED = 0;
     uint constant STATUS_NOT_STARTED = 1;
     uint constant STATUS_STARTED = 2;
     uint constant STATUS_COMPLETE = 3;
@@ -24,7 +27,8 @@ contract BlockBet {
     uint constant STATUS_FALSE = 2;
 
     //1 ether value, change to MIS later
-    uint256 constant amount = 1000000000000000000;
+    // uint256 constant amount = 1000000000000000000;
+    uint256 constant amount = 1;
 
     //structures
     struct BetterBet {
@@ -62,16 +66,34 @@ contract BlockBet {
     }
 
     function createBet(uint _guess, address _oracle, string memory _betDescription, address _takerAddr, uint256 takerBetAmount) public payable {    //guess 1(true) 2(false)
-        require(_guess == STATUS_TRUE || _guess == STATUS_FALSE);
+        require(_guess == STATUS_TRUE || _guess == STATUS_FALSE, "guess is not set to 1 or 2");
+
+        console.log(
+            "Creating Bet [$s] from %s with amount %s",
+            betInd,
+            msg.sender,
+            msg.value
+        );
+
         uint256 tempAmount = takerBetAmount*amount;
-        game = Game(STATUS_NOT_SET, STATUS_STARTED, BetterBet(_guess, payable(msg.sender), STATUS_PENDING, msg.value), BetterBet(0, payable(_takerAddr), STATUS_NOT_PENDING, tempAmount), _oracle, _betDescription);
+        game = Game(STATUS_NOT_SET, STATUS_NOT_STARTED, BetterBet(_guess, payable(msg.sender), STATUS_PENDING, msg.value), BetterBet(0, payable(_takerAddr), STATUS_NOT_PENDING, tempAmount), _oracle, _betDescription);
         game.originator = BetterBet(_guess, payable(msg.sender), STATUS_PENDING, msg.value);
         games[betInd] = game;
         betInd = betInd + 1;
     }
 
     function takeBet(uint256 betID) public payable {
-        require(msg.value == games[betID].taker.betAmount && msg.sender == games[betID].taker.addr);
+        require(msg.value == games[betID].taker.betAmount, "bet amount is incorrect");
+        require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
+
+        console.log(
+            "Taking Bet [$s] from %s with amount %s",
+            betID,
+            msg.sender,
+            msg.value
+        );
+
+        games[betID].status = STATUS_STARTED;
         uint takerGuess;
         if(games[betID].originator.guess == STATUS_TRUE){
             takerGuess = STATUS_FALSE;
@@ -82,13 +104,23 @@ contract BlockBet {
     }
 
     function denyBet(uint256 betID) public payable {
-        require(msg.sender == games[betID].taker.addr);
+        require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
+
+        console.log(
+            "Denying Bet [%s] from %s with amount %s",
+            betID,
+            msg.sender,
+            msg.value
+        );
+
+        games[betID].status = STATUS_VOIDED;
         games[betID].originator.addr.transfer(games[betID].originator.betAmount);
     }
 
     function setBetOutcome(uint256 betID, uint _outcome) public {
-        require(msg.sender == games[betID].oracle);
-        require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING);
+        require(msg.sender == games[betID].oracle, "oracle address is incorrect");
+        require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
+        require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
         games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
         games[betID].status = STATUS_COMPLETE;
 
@@ -106,8 +138,8 @@ contract BlockBet {
     }
 
     function payout(uint256 betID) public payable {
-        require(msg.sender == games[betID].oracle);
-        require(games[betID].status == STATUS_COMPLETE);
+        require(msg.sender == games[betID].oracle, "oracle address is incorrect");
+        require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
         if(games[betID].originator.status == STATUS_WIN) {
             games[betID].originator.addr.transfer(games[betID].originator.betAmount + games[betID].taker.betAmount);
         }else if(games[betID].taker.status == STATUS_WIN) {
@@ -119,14 +151,14 @@ contract BlockBet {
     }
 
     function nullBet(uint256 betID) public payable {   //currently only oracle can nullify bet, need to figure out frontend logistics on voting to nulltify bet
-        require(msg.sender == games[betID].oracle);
+        require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         games[betID].originator.addr.transfer(games[betID].originator.betAmount);
         games[betID].taker.addr.transfer(games[betID].originator.betAmount);
     }
 
     function checkPermissions(uint256 betID, address sender) view private {
         //only the originator, taker, or oracle can call this function
-        require(sender == games[betID].originator.addr || sender == games[betID].taker.addr || sender == games[betID].oracle);
+        require(sender == games[betID].originator.addr || sender == games[betID].taker.addr || sender == games[betID].oracle, "must be originator, taker, or oracle address");
     }
 
     function getBetAmounts(uint256 betID) public view returns (uint256, uint256) {
@@ -136,6 +168,19 @@ contract BlockBet {
     function getBetDescription(uint256 betID) public view returns (string memory) {
         checkPermissions(betID, msg.sender);
         return games[betID].betDescription;
+    }
+
+    function getGameStatus(uint256 betID) public view returns (uint256) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].status;
+    }
+    function getOriginatorStatus(uint256 betID) public view returns (uint256) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].originator.status;
+    }
+    function getTakerStatus(uint256 betID) public view returns (uint256) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].taker.status;
     }
 
     function getOriginatorAddress(uint256 betID) public view returns (address) {
@@ -158,6 +203,11 @@ contract BlockBet {
     function getTakerGuess(uint256 betID) public view returns (uint) {
         checkPermissions(betID, msg.sender);
         return games[betID].taker.guess;
+    }
+
+    function getOutcome(uint256 betID) public view returns (uint) {
+        checkPermissions(betID, msg.sender);
+        return games[betID].outcome;
     }
 
     //returns - [<description>, <outcome>, 'originator', <originator status>, 'taker', <taker status>]
