@@ -69,7 +69,7 @@ contract BlockBet {
         require(_guess == STATUS_TRUE || _guess == STATUS_FALSE, "guess is not set to 1 or 2");
 
         console.log(
-            "Creating Bet [$s] from %s with amount %s",
+            "Creating Bet $s from %s with amount %s",
             betInd,
             msg.sender,
             msg.value
@@ -87,7 +87,7 @@ contract BlockBet {
         require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
 
         console.log(
-            "Taking Bet [$s] from %s with amount %s",
+            "Taking Bet $s from %s with amount %s",
             betID,
             msg.sender,
             msg.value
@@ -107,7 +107,7 @@ contract BlockBet {
         require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
 
         console.log(
-            "Denying Bet [%s] from %s with amount %s",
+            "Denying Bet %s from %s with amount %s",
             betID,
             msg.sender,
             msg.value
@@ -121,6 +121,13 @@ contract BlockBet {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
         require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
+
+        console.log(
+            "Setting bet %s outcome from %s",
+            betID,
+            msg.sender
+        );
+
         games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
         games[betID].status = STATUS_COMPLETE;
 
@@ -140,6 +147,9 @@ contract BlockBet {
     function payout(uint256 betID) public payable {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
+
+
+
         if(games[betID].originator.status == STATUS_WIN) {
             games[betID].originator.addr.transfer(games[betID].originator.betAmount + games[betID].taker.betAmount);
         }else if(games[betID].taker.status == STATUS_WIN) {

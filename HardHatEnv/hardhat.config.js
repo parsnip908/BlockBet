@@ -4,3 +4,26 @@ require("@nomicfoundation/hardhat-toolbox");
 module.exports = {
   solidity: "0.8.24",
 };
+
+// module.exports = {
+//   solidity: "0.8.24",
+//   networks: {
+//     hardhat: {
+//       forking: {
+//         url: 
+//       }
+//     }
+//   }
+// };
+
+// module.exports = {
+//   solidity: {
+//     version: "0.8.24",
+//     settings: {
+//       optimizer: {
+//         enabled: true,
+//         runs: 1000,
+//       },
+//     },
+//   },
+// };
