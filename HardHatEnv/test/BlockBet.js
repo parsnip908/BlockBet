@@ -4,15 +4,22 @@ const { expect } = require("chai");
 const hre = require("hardhat");
 //const { time } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
+// BetterBet status
 const STATUS_WIN = 1;
 const STATUS_LOSE = 2;
 const STATUS_PENDING = 3;
 const STATUS_NOT_PENDING = 4;
+
+// game status
 const STATUS_VOIDED = 0;
 const STATUS_NOT_STARTED = 1;
 const STATUS_STARTED = 2;
 const STATUS_COMPLETE = 3;
+
+// general status
 const STATUS_ERROR = 5;
+
+// bet outcome status
 const STATUS_NOT_SET = 0;
 const STATUS_TRUE = 1;
 const STATUS_FALSE = 2;
@@ -48,9 +55,9 @@ describe("BlockBet",  () => {
         console.log("better5 address: ", better5.address)
         console.log("contract address: ", await BlockBet.getAddress())
 
-        betArray = await BlockBet.betInd();
+        betIndex = await BlockBet.betInd();
         await BlockBet.connect(better1).createBet(1,better2.address,"E",better3.address,10,{ value: 10 })
-        betArray = await BlockBet.betInd();
+        betIndex = await BlockBet.betInd();
         game0 = await BlockBet.connect(better1).getBetDescription(0);
         game0status = await BlockBet.connect(better1).getGameStatus(0);
         await BlockBet.connect(better3).takeBet(0,{ value: 10 })
@@ -60,11 +67,11 @@ describe("BlockBet",  () => {
 
     it("can create new bet and correct taker can accepts", async function () {
         const { BlockBet, owner,better1,better2,better3,better4,better5 } = await deployBlockBet();
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(0)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(0)
         await BlockBet.connect(better1).createBet(1,better2.address,"E",better3.address,10,{ value: 10 })
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(1)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(1)
         game0 = await BlockBet.connect(better1).getBetDescription(0);
         expect(game0).to.equal("E")
         game0status = await BlockBet.connect(better1).getGameStatus(0);
@@ -76,10 +83,10 @@ describe("BlockBet",  () => {
 
     it("fails with bad taker address", async function () {
         const { BlockBet, owner,better1,better2,better3,better4,better5 } = await deployBlockBet();
-        betArray = await BlockBet.betInd();
+        betIndex = await BlockBet.betInd();
         await BlockBet.connect(better1).createBet(1,better2.address,"E",better3.address,10,{ value: 10 })
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(1)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(1)
         game0 = await BlockBet.connect(better1).getBetDescription(0);
         game0status = await BlockBet.connect(better1).getGameStatus(0);
         await expect(
@@ -91,10 +98,10 @@ describe("BlockBet",  () => {
 
     it("fails with bad taker amount", async function () {
         const { BlockBet, owner,better1,better2,better3,better4,better5 } = await deployBlockBet();
-        betArray = await BlockBet.betInd();
+        betIndex = await BlockBet.betInd();
         await BlockBet.connect(better1).createBet(1,better2.address,"E",better3.address,10,{ value: 10 })
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(1)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(1)
         game0 = await BlockBet.connect(better1).getBetDescription(0);
         game0status = await BlockBet.connect(better1).getGameStatus(0);
         await expect(
@@ -106,11 +113,11 @@ describe("BlockBet",  () => {
 
     it("taker can deny bet", async function () {
         const { BlockBet, owner,better1,better2,better3,better4,better5 } = await deployBlockBet();
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(0)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(0)
         await BlockBet.connect(better1).createBet(1,better2.address,"E",better3.address,10,{ value: 10 })
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(1)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(1)
         game0 = await BlockBet.connect(better1).getBetDescription(0);
         expect(game0).to.equal("E")
         game0status = await BlockBet.connect(better1).getGameStatus(0);
@@ -122,11 +129,11 @@ describe("BlockBet",  () => {
 
     it("oracle can set bet outcome", async function () {
         const { BlockBet, owner,better1,better2,better3,better4,better5 } = await deployBlockBet();
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(0)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(0)
         await BlockBet.connect(better1).createBet(1,better2.address,"E",better3.address,10,{ value: 10 })
-        betArray = await BlockBet.betInd();
-        expect(betArray).to.equal(1)
+        betIndex = await BlockBet.betInd();
+        expect(betIndex).to.equal(1)
         game0 = await BlockBet.connect(better1).getBetDescription(0);
         expect(game0).to.equal("E")
         game0status = await BlockBet.connect(better1).getGameStatus(0);
