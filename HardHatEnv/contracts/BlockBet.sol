@@ -69,7 +69,11 @@ contract BlockBet {
         require(_guess == STATUS_TRUE || _guess == STATUS_FALSE, "guess is not set to 1 or 2");
 
         console.log(
+<<<<<<< HEAD
             "Creating Bet [%s] from %s with amount %s",
+=======
+            "Creating Bet[%s] from %s with amount %s",
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
             betInd,
             msg.sender,
             msg.value
@@ -87,7 +91,11 @@ contract BlockBet {
         require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
 
         console.log(
+<<<<<<< HEAD
             "Taking Bet [%s] from %s with amount %s",
+=======
+            "Taking Bet[%s] from %s with amount %s",
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
             betID,
             msg.sender,
             msg.value
@@ -107,10 +115,9 @@ contract BlockBet {
         require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
 
         console.log(
-            "Denying Bet [%s] from %s with amount %s",
+            "Denying Bet[%s] from %s",
             betID,
-            msg.sender,
-            msg.value
+            msg.sender
         );
 
         games[betID].status = STATUS_VOIDED;
@@ -121,9 +128,15 @@ contract BlockBet {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
         require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
+<<<<<<< HEAD
         
         console.log(
             "Setting Bet [%s] outcome to %s from %s",
+=======
+
+        console.log(
+            "Setting Bet[%s] outcome to %s from %s",
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
             betID,
             _outcome,
             msg.sender
@@ -149,22 +162,72 @@ contract BlockBet {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
         if(games[betID].originator.status == STATUS_WIN) {
-            games[betID].originator.addr.transfer(games[betID].originator.betAmount + games[betID].taker.betAmount);
+            uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
+            games[betID].originator.addr.transfer(winnings);
+
+            console.log(
+                "Originator Won: Paying out Bet[%s] amount %s to %s",
+                betID,
+                winnings,
+                games[betID].originator.addr
+            );
         }else if(games[betID].taker.status == STATUS_WIN) {
-            games[betID].taker.addr.transfer(games[betID].originator.betAmount + games[betID].taker.betAmount);
+            uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
+            games[betID].taker.addr.transfer(winnings);
+            
+            console.log(
+                "Taker Won: Paying out Bet[%s] amount %s to %s",
+                betID,
+                winnings,
+                games[betID].taker.addr
+            );
         }else{
-            games[betID].originator.addr.transfer(games[betID].originator.betAmount);
-            games[betID].taker.addr.transfer(games[betID].originator.betAmount);
+            uint256 originatorWinnings = games[betID].originator.betAmount;
+            uint256 takerWinnings = games[betID].taker.betAmount;
+            games[betID].originator.addr.transfer(originatorWinnings);
+            games[betID].taker.addr.transfer(takerWinnings);
+
+            console.log(
+                "Noone Won: Paying out Bet[%s] amount %s to %s",
+                betID,
+                originatorWinnings,
+                games[betID].taker.addr
+            );
+            console.log(
+                "Noone Won: Paying out Bet[%s] amount %s to %s",
+                betID,
+                takerWinnings,
+                games[betID].taker.addr
+            );
         }
     }
 
     function nullBet(uint256 betID) public payable {   //currently only oracle can nullify bet, need to figure out frontend logistics on voting to nulltify bet
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
-        games[betID].originator.addr.transfer(games[betID].originator.betAmount);
-        games[betID].taker.addr.transfer(games[betID].originator.betAmount);
+
+        uint256 originatorWinnings = games[betID].originator.betAmount;
+        uint256 takerWinnings = games[betID].taker.betAmount;
+        games[betID].originator.addr.transfer(originatorWinnings);
+        games[betID].taker.addr.transfer(takerWinnings);
+
+        console.log(
+            "Noone Won: Paying out Bet[%s] amount %s to %s",
+            betID,
+            originatorWinnings,
+            games[betID].taker.addr
+        );
+        console.log(
+            "Noone Won: Paying out Bet[%s] amount %s to %s",
+            betID,
+            takerWinnings,
+            games[betID].taker.addr
+        );
     }
 
     function checkPermissions(uint256 betID, address sender) view private {
@@ -215,7 +278,6 @@ contract BlockBet {
         checkPermissions(betID, msg.sender);
         return games[betID].taker.guess;
     }
-
     function getOutcome(uint256 betID) public view returns (uint) {
         checkPermissions(betID, msg.sender);
         return games[betID].outcome;
@@ -243,4 +305,17 @@ contract BlockBet {
         takerKey = "taker";
         takerStatus = games[betID].taker.status;
     }
+<<<<<<< HEAD
+=======
+
+    function getBalance() public view returns (uint) {
+        uint balance = address(this).balance;
+
+        // console.log("Called getBalance -- ");
+        // console.log("contractAddress", address(this));
+        // console.log("contractBalance", balance);
+
+        return balance;
+    }
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
 }
