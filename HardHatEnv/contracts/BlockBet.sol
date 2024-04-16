@@ -69,7 +69,11 @@ contract BlockBet {
         require(_guess == STATUS_TRUE || _guess == STATUS_FALSE, "guess is not set to 1 or 2");
 
         console.log(
+<<<<<<< HEAD
+            "Creating Bet [%s] from %s with amount %s",
+=======
             "Creating Bet[%s] from %s with amount %s",
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
             betInd,
             msg.sender,
             msg.value
@@ -87,7 +91,11 @@ contract BlockBet {
         require(msg.sender == games[betID].taker.addr, "taker address is incorrect");
 
         console.log(
+<<<<<<< HEAD
+            "Taking Bet [%s] from %s with amount %s",
+=======
             "Taking Bet[%s] from %s with amount %s",
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
             betID,
             msg.sender,
             msg.value
@@ -120,9 +128,15 @@ contract BlockBet {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
         require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
+<<<<<<< HEAD
+        
+        console.log(
+            "Setting Bet [%s] outcome to %s from %s",
+=======
 
         console.log(
             "Setting Bet[%s] outcome to %s from %s",
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
             betID,
             _outcome,
             msg.sender
@@ -148,6 +162,11 @@ contract BlockBet {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
 
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
         if(games[betID].originator.status == STATUS_WIN) {
             uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
             games[betID].originator.addr.transfer(winnings);
@@ -286,6 +305,8 @@ contract BlockBet {
         takerKey = "taker";
         takerStatus = games[betID].taker.status;
     }
+<<<<<<< HEAD
+=======
 
     function getBalance() public view returns (uint) {
         uint balance = address(this).balance;
@@ -296,4 +317,5 @@ contract BlockBet {
 
         return balance;
     }
+>>>>>>> 901115ebfdced500b88c3a982ef13ff99564ad68
 }
