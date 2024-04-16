@@ -1,17 +1,56 @@
-
+import { useState, useEffect } from 'react'
+import { ethers } from "ethers";
+import { BrowserProvider, parseUnits } from "ethers";
+import { contractAbi, contractAddress } from './Constant/constant'
 import './App.css';
-import Test from './test'
+
+import Login from './Components/Login'
+import Connected from './Components/Connected'
 import './../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap'
-import { Container } from 'react-bootstrap';
+
 
 function App() {
+
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [contract, setContract] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const connectMetaMask = async () => {
+    if (window.ethereum) { // Check if MetaMask is installed
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        setProvider(provider)
+        await provider.send("eth_requestAccounts", [])
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setAccount(address)
+        console.log(`Connected to wallet: ${address}`);
+        setIsConnected(true);
+        console.log(`isConnected: ${isConnected}`);
+        const contract = new ethers.Contract(contractAddress, contractAbi, signer);
+        setContract(contract);
+      } catch (error) {
+        console.error('Error connecting to MetaMask', error);
+      }
+    } else {
+      alert('MetaMask is not installed. Please install it to use this feature.');
+    }
+  };
   return (
-    <Container className="App-bg-color">
-      <h1 className="title">BLOCK BET</h1>
-      <Test />
-    </Container>
+
+    <div className="App">
+      {isConnected ?
+        (<Connected
+          account={account}
+          contract={contract}
+        />)
+        : (<Login connectWallet={connectMetaMask} />)}
+    </div>
   );
+
 }
 
 export default App;

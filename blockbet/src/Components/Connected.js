@@ -1,6 +1,7 @@
-import React from "react"
+import React from 'react'
 import { useState } from "react";
-import './../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import { ethers } from "ethers";
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, CardBody, CardHeader } from 'react-bootstrap'
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -9,10 +10,12 @@ import Col from 'react-bootstrap/Col';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 
+const Connected = (props) => {
+    const contract = props.contract;
 
-const Test = () => {
     const [betAmount, setBetAmount] = useState('');
     const [betDes, setBetDes] = useState('');
+    const [betPosition, setBetPosition] = useState('');
     const [betRecipient, setRecipient] = useState('');
     const [oracleAdress, setOracleAddress] = useState('');
 
@@ -21,12 +24,15 @@ const Test = () => {
     const [BetIDOracle, setBetIDOracle] = useState('');
     const [BetResult, setBetResult] = useState('');
 
-
+    // handle all the input change
     const handleBetAmountChange = (event) => {
         setBetAmount(event.target.value);
     };
     const handleBetDesChange = (event) => {
         setBetDes(event.target.value);
+    };
+    const handleBetPositionChange = (event) => {
+        setBetPosition(event.target.value);
     };
     const handleBetRecipientChange = (event) => {
         setRecipient(event.target.value);
@@ -35,54 +41,80 @@ const Test = () => {
         setOracleAddress(event.target.value);
     };
 
-    const acceptBet = () => {
+    const acceptBet = async () => {
+        // check if it is a valid ID
+        if (!BetID) {
+            alert("Please enter a valid Bet ID.");
+            return;
+        }
+        try {
+
+            // hardcoded the amount you want to send
+            const etherAmount = 0.1;
+            const options = {
+                value: ethers.utils.parseEther(etherAmount)
+            }
+            const txResponse = await contract.takeBet(BetID, options);
+            await txResponse.wait();
+            console.log('Bet accepted successfully.');
+
+        } catch (error) {
+            console.error("Failed to accept the bet:", error);
+            alert("Transcation failded: " + error.message)
+        }
+
     };
-    const rejectBet = () => {
+    const rejectBet = async () => {
+        if (!BetID) {
+            alert("Please enter a valid Bet ID.");
+            return;
+        }
+        try {
+
+            // hardcoded the amount you want to send
+            const etherAmount = 0.1;
+            const options = {
+                value: ethers.utils.parseEther(etherAmount)
+            }
+            const txResponse = await contract.denyBet(BetID, options);
+            await txResponse.wait();
+            console.log('You have rejected the bet.');
+
+        } catch (error) {
+            console.error("Failed to reject the bet:", error);
+            alert("Transcation failded: " + error.message)
+        }
+
     };
-    const postResult = () => {
+    const postResult = async () => {
+        contract.setBetOutcome(BetID, BetResult)
     };
 
 
 
-    const placeBet = () => {
-        // Here you would handle the bet placement logic
+    const placeBet = async () => {
+        // handle the bet placement logic
         console.log(`Placing bet of ${betAmount}`);
+
+        contract.createBet(betPosition, oracleAdress, betDes, betRecipient, betAmount,)
         // Reset bet amount after placing the bet
         setBetAmount('');
     };
 
-    const connectMetaMask = async () => {
-        if (window.ethereum) { // Check if MetaMask is installed
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); // Request account access
-                setWalletAddress(accounts[0]); // Set the first account as the wallet address
-                console.log(`Connected to wallet: ${accounts[0]}`);
-            } catch (error) {
-                console.error('Error connecting to MetaMask', error);
-            }
-        } else {
-            alert('MetaMask is not installed. Please install it to use this feature.');
-        }
-    };
 
     return (
         <Container>
-
-            <Row>
-                <Col>
-                    {/* Your connect to MetaMask button and Create Bet form */}
-                    <button variant="warning" size="sm" onClick={connectMetaMask}>Connect to MetaMask</button>
-                    {walletAddress && <p>Connected Wallet: {walletAddress}</p>}
-
-                </Col>
-            </Row>
+            <h1>
+                Your are connected to MetaMask!
+            </h1>
+            <p>Account address: {props.account}</p>
 
             <Row>
                 <Col>
                     <Card>
                         <CardHeader>Create Bet</CardHeader>
                         <CardBody>
-                            <div class="mb-1">
+                            <div className="mb-1">
                                 <input
                                     type="text"
                                     value={betAmount}
@@ -90,12 +122,20 @@ const Test = () => {
                                     placeholder="Enter bet amount"
                                 />
                             </div>
-                            <div class="mb-1">
+                            <div className="mb-1">
                                 <input
                                     type="text"
                                     value={betDes}
                                     onChange={handleBetDesChange}
                                     placeholder="Enter bet description"
+                                />
+                            </div>
+                            <div className="mb-1">
+                                <input
+                                    type="text"
+                                    value={betPosition}
+                                    onChange={handleBetPositionChange}
+                                    placeholder="Enter bet position"
                                 />
                             </div>
                             <div class="mb-1">
@@ -106,7 +146,7 @@ const Test = () => {
                                     placeholder="Enter participant address"
                                 />
                             </div>
-                            <div class="mb-1">
+                            <div className="mb-1">
                                 <input
                                     type="text"
                                     value={oracleAdress}
@@ -206,5 +246,6 @@ const Test = () => {
             </Row>
         </Container>
     )
+
 }
-export default Test
+export default Connected
