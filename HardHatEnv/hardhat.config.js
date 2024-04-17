@@ -6,6 +6,7 @@ require("dotenv").config();
 //   solidity: "0.8.24",
 // };
 
+//to deploy to mis blockchain: npx hardhat –network mis385n run scripts/deploy.js
 module.exports = {
   solidity: "0.8.24",
   networks: {

@@ -20,21 +20,23 @@ async function main() {
     await deployer.getAddress()
   );
 
-  console.log("Account balance:", (await deployer.getBalance()).toString());
+  // console.log("Account balance:", (await deployer.getBalance()).toString());
+  console.log("Account balance:", (await deployer.provider.getBalance(deployer.address)));
 
-  const Token = await ethers.getContractFactory("Token");
-  const token = await Token.deploy();
-  await token.deployed();
+  const bb = await ethers.getContractFactory("BlockBet");
+  const BlockBet = await bb.deploy();
+  // await BlockBet.deployed();
+  await BlockBet.waitForDeployment();
 
-  console.log("Token Joey's address:", token.address);
+  console.log("BlockBet(contract) Alan's address:", await BlockBet.getAddress());
 
   // We also save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(token);
+  saveFrontendFiles(BlockBet);
 }
 
-function saveFrontendFiles(token) {
+function saveFrontendFiles(BlockBet) {
   const fs = require("fs");
-  const contractsDir = path.join(__dirname, "..", "frontend", "src", "contracts");
+  const contractsDir = path.join(__dirname, "..", "front", "src", "contracts");
 
   if (!fs.existsSync(contractsDir)) {
     fs.mkdirSync(contractsDir);
@@ -42,14 +44,14 @@ function saveFrontendFiles(token) {
 
   fs.writeFileSync(
     path.join(contractsDir, "contract-address.json"),
-    JSON.stringify({ Token: token.address }, undefined, 2)
+    JSON.stringify({ BlockBet: BlockBet.address }, undefined, 2)
   );
 
-  const TokenArtifact = artifacts.readArtifactSync("Token");
+  const BlockBetArtifact = artifacts.readArtifactSync("BlockBet");
 
   fs.writeFileSync(
-    path.join(contractsDir, "Token.json"),
-    JSON.stringify(TokenArtifact, null, 2)
+    path.join(contractsDir, "BlockBet.json"),
+    JSON.stringify(BlockBetArtifact, null, 2)
   );
 }
 
