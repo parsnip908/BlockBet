@@ -31,7 +31,7 @@ async function main() {
   console.log("BlockBet(contract) Alan's address:", await BlockBet.getAddress());
 
   // We also save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(BlockBet);
+  saveFrontendFiles(BlockBet); //change when u need it
 }
 
 function saveFrontendFiles(BlockBet) {
