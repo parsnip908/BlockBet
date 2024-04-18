@@ -1,8 +1,8 @@
 // scripts/index.js
 require("dotenv").config();
 const PK = process.env.PK;
-// const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
-const CONTRACT_ADDRESS = 0x9eB432e962fe21881248F900b2C40A46188462d6;
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+// const CONTRACT_ADDRESS = 0x9eB432e962fe21881248F900b2C40A46188462d6;
 
 const contract = require("../artifacts/contracts/BlockBet.sol/BlockBet.json");  // grab contract abi
 
@@ -24,8 +24,15 @@ async function main () {
     // Retrieve accounts from the local node
     // await window.ethereum.enable
     // const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const accounts = await provider.listAccounts();
-    console.log(accounts);
+
+    // const accounts = await provider.listAccounts();
+    // console.log(accounts);
+
+    const signer = new ethers.Wallet(PK, provider);
+    const BlockBetContract = new ethers.Contract(CONTRACT_ADDRESS, contract.abi, signer);
+
+    const betInd = await BlockBetContract.getBetInd();
+    console.log("Current betInd is " + betInd);
 }
 
 main()
