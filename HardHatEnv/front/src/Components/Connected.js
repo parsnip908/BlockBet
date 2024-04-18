@@ -24,23 +24,6 @@ const Connected = (props) => {
     const [BetIDOracle, setBetIDOracle] = useState('');
     const [BetResult, setBetResult] = useState('');
 
-    // handle all the input change
-    const handleBetAmountChange = (event) => {
-        setBetAmount(event.target.value);
-    };
-    const handleBetDesChange = (event) => {
-        setBetDes(event.target.value);
-    };
-    const handleBetPositionChange = (event) => {
-        setBetPosition(event.target.value);
-    };
-    const handleBetRecipientChange = (event) => {
-        setRecipient(event.target.value);
-    };
-    const handleOracleAddressChange = (event) => {
-        setOracleAddress(event.target.value);
-    };
-
     const acceptBet = async () => {
         // check if it is a valid ID
         if (!BetID) {
@@ -49,10 +32,8 @@ const Connected = (props) => {
         }
         try {
 
-            // hardcoded the amount you want to send
-            const etherAmount = 0.1;
             const options = {
-                value: ethers.utils.parseEther(etherAmount)
+                value: ethers.utils.parseEther(betAmount)
             }
             const txResponse = await contract.takeBet(BetID, options);
             await txResponse.wait();
@@ -71,12 +52,7 @@ const Connected = (props) => {
         }
         try {
 
-            // hardcoded the amount you want to send
-            const etherAmount = 0.1;
-            const options = {
-                value: ethers.utils.parseEther(etherAmount)
-            }
-            const txResponse = await contract.denyBet(BetID, options);
+            const txResponse = await contract.denyBet(BetID, {});
             await txResponse.wait();
             console.log('You have rejected the bet.');
 
@@ -87,7 +63,13 @@ const Connected = (props) => {
 
     };
     const postResult = async () => {
-        contract.setBetOutcome(BetID, BetResult)
+        try {
+            const txResponse = await contract.setBetOutcome(BetID, BetResult)
+            await txResponse.wait();
+        } catch (error) {
+            console.error('Failed to set the outcome:', error);
+            alert(`Transaction failed: ${error.message}`);
+        }
     };
 
 
@@ -95,8 +77,17 @@ const Connected = (props) => {
     const placeBet = async () => {
         // handle the bet placement logic
         console.log(`Placing bet of ${betAmount}`);
+        try {
+            const options = {
+                value: ethers.utils.parseEther(betAmount)
+            }
+            const txResponse = contract.createBet(parseInt(betPosition), oracleAdress, betDes, betRecipient, betAmount, options)
+            await txResponse.wait();
+        } catch (error) {
+            console.error("Failed to create the bet", error);
+            alert("Transcation failded: " + error.message)
+        }
 
-        contract.createBet(betPosition, oracleAdress, betDes, betRecipient, betAmount,)
         // Reset bet amount after placing the bet
         setBetAmount('');
     };
@@ -118,7 +109,7 @@ const Connected = (props) => {
                                 <input
                                     type="text"
                                     value={betAmount}
-                                    onChange={handleBetAmountChange}
+                                    onChange={(event) => setBetAmount(event.target.value)}
                                     placeholder="Enter bet amount"
                                 />
                             </div>
@@ -126,7 +117,7 @@ const Connected = (props) => {
                                 <input
                                     type="text"
                                     value={betDes}
-                                    onChange={handleBetDesChange}
+                                    onChange={(event) => setBetDes(event.target.value)}
                                     placeholder="Enter bet description"
                                 />
                             </div>
@@ -134,7 +125,7 @@ const Connected = (props) => {
                                 <input
                                     type="text"
                                     value={betPosition}
-                                    onChange={handleBetPositionChange}
+                                    onChange={(event) => setBetPosition(event.target.value)}
                                     placeholder="Enter bet position"
                                 />
                             </div>
@@ -142,7 +133,7 @@ const Connected = (props) => {
                                 <input
                                     type="text"
                                     value={betRecipient}
-                                    onChange={handleBetRecipientChange}
+                                    onChange={(event) => setRecipient(event.target.value)}
                                     placeholder="Enter participant address"
                                 />
                             </div>
@@ -150,7 +141,7 @@ const Connected = (props) => {
                                 <input
                                     type="text"
                                     value={oracleAdress}
-                                    onChange={handleOracleAddressChange}
+                                    onChange={(event) => setOracleAddress(event.target.value)}
                                     placeholder="Enter oracle address"
                                 />
                             </div>
