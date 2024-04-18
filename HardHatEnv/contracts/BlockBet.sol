@@ -268,6 +268,11 @@ contract BlockBet {
         return games[betID].outcome;
     }
 
+    function getBetInd() public view returns (uint256) {
+        // checkPermissions(betID, msg.sender);
+        return betInd;
+    }
+
     //returns - [<description>, <outcome>, 'originator', <originator status>, 'taker', <taker status>]
     function getBetOutcome(uint256 betID) public view returns (string memory description, string memory outcome, string memory originatorKey, uint originatorStatus, string memory takerKey, uint takerStatus) {
         if(games[betID].originator.status == STATUS_WIN && games[betID].taker.status == STATUS_LOSE) {

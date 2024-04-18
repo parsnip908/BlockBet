@@ -2,7 +2,7 @@
 require("dotenv").config();
 const PK = process.env.PK;
 // const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
-const CONTRACT_ADDRESS = 0xE4478071fd96D3461653fdb316eDeCa8d1C11418;
+const CONTRACT_ADDRESS = 0x9eB432e962fe21881248F900b2C40A46188462d6;
 
 const contract = require("../artifacts/contracts/BlockBet.sol/BlockBet.json");  // grab contract abi
 
