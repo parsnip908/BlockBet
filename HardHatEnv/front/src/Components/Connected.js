@@ -167,13 +167,10 @@ const Connected = (props) => {
                         <Card.Header>Bet List</Card.Header>
                         <Card.Body>
                             <Tabs
-                                defaultActiveKey="Pending"
-                                id="uncontrolled-tab-example"
+                                defaultActiveKey="Active"
+                                id="Bet-list-tabs"
                                 className="mb-3"
                             >
-                                <Tab eventKey="all" title="All">
-                                    Tab content for All
-                                </Tab>
                                 <Tab eventKey="pending" title="Pending">
                                     <p>ID   Amount &nbsp;Description Position Status</p>
                                     <p>34   1000 w   Will this website work?   True     active</p>
@@ -204,30 +201,21 @@ const Connected = (props) => {
                         <Card.Header>Oracle List</Card.Header>
                         <Card.Body>
                             <Tabs
-                                defaultActiveKey="Pending"
-                                id="uncontrolled-tab-example"
+                                defaultActiveKey="Active"
+                                id="Oracle-list-tabs"
                                 className="mb-3"
                             >
-                                <Tab eventKey="all" title="All">
-                                    Tab content for All
-                                </Tab>
-                                <Tab eventKey="pending" title="Pending">
-                                    <p>ID   Amount &nbsp;Description Position Status</p>
-                                    <p>34   1000 w   Will this website work?   True     active</p>
-                                    <p>23   1000 w   Will this website work?   True     waiting</p>
-                                    <p></p>
-                                </Tab>
                                 <Tab eventKey="active" title="Active">
-                                    Tab content for Active
+                                    <p>ID   Description                     Status</p>
+                                    <p>65   Will I get an A in Microarch?   response needed</p>
+                                    <p>23   Will this website work?         waiting</p>
+                                    <p></p>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
                                     Tab content for Complete
                                 </Tab>
                             </Tabs>
-                            <p>ID   Description                     Status</p>
-                            <p>65   Will I get an A in Microarch?   response needed</p>
-                            <p>23   Will this website work?         waiting</p>
-                            <p></p>
+                            
                             <input
                                 type="text"
                                 value={BetIDOracle}
