@@ -99,7 +99,7 @@ const Connected = (props) => {
                 Your are connected to MetaMask!
             </h1>
             <p>Account address: {props.account}</p>
-            <p> contract.get</p>
+            <p> {props.betIndex}</p>
 
             <Row>
                 <Col>
@@ -207,7 +207,7 @@ const Connected = (props) => {
                                     Tab content for Complete
                                 </Tab>
                             </Tabs>
-                            
+
                             <input
                                 type="text"
                                 value={BetIDOracle}

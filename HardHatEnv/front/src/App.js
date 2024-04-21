@@ -17,6 +17,7 @@ function App() {
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [betInd, setBetInd] = useState("null")
 
   const connectMetaMask = async () => {
     if (window.ethereum) { // Check if MetaMask is installed
@@ -32,6 +33,7 @@ function App() {
         console.log(`isConnected: ${isConnected}`);
         const contract = new ethers.Contract(contractAddress, contractAbi, signer);
         setContract(contract);
+        setBetInd(contract.getBetInd());
       } catch (error) {
         console.error('Error connecting to MetaMask', error);
       }
@@ -44,7 +46,8 @@ function App() {
       {isConnected ?
         (<Connected
           account={account}
-          contract = {contract}
+          contract={contract}
+          betIndex={betInd}
         />)
         : (<Login connectWallet={connectMetaMask} />)}
     </div>
