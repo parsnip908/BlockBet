@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState } from "react";
+import { useState, useEffect  } from "react";
 import { ethers } from "ethers";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, CardBody, CardHeader } from 'react-bootstrap'
@@ -23,6 +23,14 @@ const Connected = (props) => {
     const [BetID, setBetID] = useState('');
     const [BetIDOracle, setBetIDOracle] = useState('');
     const [BetResult, setBetResult] = useState('');
+
+    const [betInd, setBetInd_] = useState(0)
+    const [BetList, setBetList] = useState(['No Bets\n'])
+    
+    const setBetInd = async () => {
+        const betIndex = await contract.getBetInd();
+        setBetInd_(betIndex.toString());
+    };
 
     const acceptBet = async () => {
         // check if it is a valid ID
@@ -60,8 +68,8 @@ const Connected = (props) => {
             console.error("Failed to reject the bet:", error);
             alert("Transcation failded: " + error.message)
         }
-
     };
+
     const postResult = async () => {
         try {
             const txResponse = await contract.setBetOutcome(BetID, BetResult)
@@ -71,8 +79,6 @@ const Connected = (props) => {
             alert(`Transaction failed: ${error.message}`);
         }
     };
-
-
 
     const placeBet = async () => {
         // handle the bet placement logic
@@ -92,6 +98,22 @@ const Connected = (props) => {
         setBetAmount('');
     };
 
+    useEffect(() => {
+
+        const fetchData = async () => {
+            for (var i = 0; i < betInd; i++) {
+                const des = await contract.getBetDescription(i);
+                // BetList.push(des);
+                setBetList(BetList => [...BetList, des]);
+                // setBetList((BetList) => BetList + '\r\n');
+            }
+            console.log(BetList);
+
+        };
+
+        setBetList([]);
+        fetchData();
+    }, [betInd]); // <- add the count variable here
 
     return (
         <Container>
@@ -99,7 +121,14 @@ const Connected = (props) => {
                 Your are connected to MetaMask!
             </h1>
             <p>Account address: {props.account}</p>
-            <p> {props.betIndex}</p>
+            <p> {betInd}</p>
+            <ul>
+                {BetList.map((item, index) => (
+                    <li key={index}>{item}</li>
+                ))}
+            </ul>
+            <p> {BetList}</p>
+            <button type="button" class="btn btn-secondary  btn-sm" onClick={setBetInd}>Refresh</button>
 
             <Row>
                 <Col>
