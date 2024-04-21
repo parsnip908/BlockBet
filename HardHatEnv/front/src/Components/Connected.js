@@ -99,6 +99,7 @@ const Connected = (props) => {
                 Your are connected to MetaMask!
             </h1>
             <p>Account address: {props.account}</p>
+            <p> contract.get</p>
 
             <Row>
                 <Col>
