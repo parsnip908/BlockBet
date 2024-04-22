@@ -19,7 +19,7 @@ const Connected = (props) => {
     const [betRecipient, setRecipient] = useState('');
     const [oracleAdress, setOracleAddress] = useState('');
 
-    const [walletAddress, setWalletAddress] = useState('');
+    // const [walletAddress, setWalletAddress] = useState('');
     const [BetID, setBetID] = useState('');
     const [BetIDOracle, setBetIDOracle] = useState('');
     const [BetResult, setBetResult] = useState('');
@@ -81,7 +81,7 @@ const Connected = (props) => {
             const options = {
                 value: ethers.utils.parseEther(betAmount)
             }
-            const txResponse = contract.createBet(parseInt(betPosition), oracleAdress, betDes, betRecipient, betAmount, options)
+            const txResponse = await contract.createBet(parseInt(betPosition), oracleAdress, betDes, betRecipient, betAmount, options)
             await txResponse.wait();
         } catch (error) {
             console.error("Failed to create the bet", error);
@@ -130,7 +130,7 @@ const Connected = (props) => {
                                     placeholder="Enter bet position"
                                 />
                             </div>
-                            <div class="mb-1">
+                            <div className="mb-1">
                                 <input
                                     type="text"
                                     value={betRecipient}
@@ -146,7 +146,7 @@ const Connected = (props) => {
                                     placeholder="Enter oracle address"
                                 />
                             </div>
-                            <button type="button" class="btn btn-secondary  btn-sm" onClick={placeBet}>Place Bet</button>
+                            <button type="button" className="btn btn-secondary  btn-sm" onClick={placeBet}>Place Bet</button>
                         </CardBody>
 
                     </Card>
