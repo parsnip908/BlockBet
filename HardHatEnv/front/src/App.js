@@ -26,9 +26,9 @@ function App() {
         await provider.send("eth_requestAccounts", [])
         const signer = provider.getSigner();
         const address = await signer.getAddress();
-        setAccount(address)
+        await setAccount(address)
         console.log(`Connected to wallet: ${address}`);
-        setIsConnected(true);
+        await setIsConnected(true);
         console.log(`isConnected: ${isConnected}`);
         console.log(contractAbi);
         const contract = new ethers.Contract(contractAddress, contractAbi, signer);
