@@ -36,6 +36,7 @@ const Connected = (props) => {
 
     const PendingHeader = ["ID", "Amount", "Description", "Position", "Status"];
     const ActiveHeader = ["ID", "Amount", "Description", "Position"];
+    const CompleteHeader = ["ID", "Amount", "Description", "Result", "W/L"];
     
     // const setBetInd = async () => {
     //     const betIndex = await contract.getBetInd();
@@ -122,13 +123,13 @@ const Connected = (props) => {
         await setBetList([]);
         await setPendingList([]);
         await setActiveList([]);
+        await setCompleteList([]);
 
         for (var i = 0; i < betIndex; i++)
         {
 
             const gameStatus = (await contract.getGameStatus(i)).toNumber();
             console.log(gameStatus);
-
             if(gameStatus == GameStatus.VOIDED) continue;
 
             const OracleAddr = await contract.getOracleAddress(i);
@@ -145,12 +146,13 @@ const Connected = (props) => {
             console.log(TakerAddr);
 
             var guess = null;
-            var amount
+            var amount;
             if (OriginAddr == props.account)
             {
                 guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "True" : "False";
                 amount = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
+                var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
                 var status = "Waiting";
             }
             else if(TakerAddr == props.account)
@@ -158,15 +160,15 @@ const Connected = (props) => {
                 guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "False" : "True";
                 amount = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
+                var userStatus = (await contract.getTakerStatus(i)).toNumber();
                 var status = "Resp Req";
             }
             else continue;
 
             const des = await contract.getBetDescription(i);
-            const takerStatus = (await contract.getTakerStatus(i)).toNumber();
             console.log(des);
             console.log(amount);
-            console.log(takerStatus);
+            console.log(userStatus);
 
             if(gameStatus == GameStatus.NOT_STARTED)
             {
@@ -177,27 +179,34 @@ const Connected = (props) => {
             else if(gameStatus == GameStatus.STARTED)
             {
                 var listObj = [i, amount.toString(), des, guess];
-                await setActiveList(BetList => [...BetList, listObj]);
                 console.log(listObj);
+                await setActiveList(BetList => [...BetList, listObj]);
             }
             else if(gameStatus == GameStatus.COMPLETE)
             {
-                // var listObj = [i, amount, des, result, winLoss];
+                status = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
+                var result = (await contract.getOutcome(i)).toNumber();
+                result = (result == BetOutcome.TRUE) ? "True" : "False";
+                var listObj = [i, amount, des, result, status];
+                console.log(listObj);
+                await setCompleteList(BetList => [...BetList, listObj]);
             }
 
-            await setBetList(BetList => [...BetList, des]);
+            // await setBetList(BetList => [...BetList, des]);
         }
-        console.log(BetList);
+        // console.log(BetList);
         console.log(PendingList);
+        console.log(ActiveList);
+        console.log(CompleteList);
 
     };
 
     return (
         <Container>
             <h1>
-                Your are connected to MetaMask!
+                BlockBet
             </h1>
-            <p>Account address: {props.account}</p>
+            <p>MetaMask account address: {props.account}</p>
             <p>Bet Count: {betInd}</p>
 {/*            <ul>
                 {BetList.map((item, index) => (
@@ -311,7 +320,25 @@ const Connected = (props) => {
                                     </table>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
-                                    Tab content for Complete
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                {CompleteHeader.map((header, index) => (
+                                                    <th key={index}>{header}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {CompleteList.map((row, rowIndex) => (
+                                                <tr key={rowIndex}>
+                                                    {row.map((cell, cellIndex) => (
+                                                        <td key={cellIndex}>{cell}</td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </Tab>
                             </Tabs>
                             <input
