@@ -144,13 +144,18 @@ contract BlockBet {
         // }
     }
 
-    function payout(uint256 betID) public payable {
+    function payout(uint256 betID, uint _outcome) public payable {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
-        require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
+        // require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
+        require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
+        require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
+
+        games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
 
         if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome) {
             games[betID].originator.status = STATUS_WIN;
             games[betID].taker.status = STATUS_LOSE;
+            games[betID].status = STATUS_COMPLETE;
 
             uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
             games[betID].originator.addr.transfer(winnings);
@@ -164,6 +169,7 @@ contract BlockBet {
         }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome) {
             games[betID].originator.status = STATUS_LOSE;
             games[betID].taker.status = STATUS_WIN;
+            games[betID].status = STATUS_COMPLETE;
 
             uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
             games[betID].taker.addr.transfer(winnings);
