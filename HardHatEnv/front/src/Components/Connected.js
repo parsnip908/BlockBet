@@ -86,8 +86,10 @@ const Connected = (props) => {
 
     const postResult = async () => {
         try {
-            const txResponse = await contract.setBetOutcome(BetID, BetResult)
+            const txResponse = await contract.setBetOutcome(BetIDOracle, BetResult)
             await txResponse.wait();
+            const txResponse2 = await contract.payout(BetIDOracle)
+            await txResponse2.wait();
         } catch (error) {
             console.error('Failed to set the outcome:', error);
             alert(`Transaction failed: ${error.message}`);
@@ -126,7 +128,7 @@ const Connected = (props) => {
         setOracleActiveList([]);
         setOracleCompleteList([]);
 
-        for (let i = 0; i < betIndex; i++) {
+        for (var i = 0; i < betIndex; i++) {
 
             const gameStatus = (await contract.getGameStatus(i)).toNumber();
             console.log(gameStatus);
