@@ -221,7 +221,7 @@ const Connected = (props) => {
             </h1>
             <p>MetaMask account address: {props.account}</p>
             <p>Bet Count: {betInd} / 65536</p>
-            <button type="button" class="btn btn-secondary  btn-sm" onClick={updateLists}>Refresh</button>
+            <button type="button" class="btn btn-secondary  btn-sm" style={{ marginBottom: '10px' }} onClick={updateLists}>Refresh</button>
 
             <Row>
                 <Col>
@@ -276,7 +276,7 @@ const Connected = (props) => {
                                     placeholder="Enter oracle address"
                                 />
                             </div>
-                            <button type="button" className="btn btn-secondary  btn-sm" onClick={placeBet}>Place Bet</button>
+                            <button type="button" className="btn btn-secondary  btn-sm" style={{ marginTop: '10px' }} onClick={placeBet}>Place Bet</button>
                         </CardBody>
 
                     </Card>
@@ -313,16 +313,17 @@ const Connected = (props) => {
                                             ))}
                                         </tbody>
                                     </table>
-                                    <div class='action-section'>
+                                    <div class='col-md-4 mt-4'>
                                         <input
                                             className='input-box '
                                             type="text"
                                             value={BetID}
                                             onChange={(event) => setBetID(event.target.value)}
                                             placeholder="Enter bet ID"
+                                            style={{ marginRight: '10px' }}
                                         />
-                                        <button type="button" className="button btn btn-secondary  btn-sm" onClick={acceptBet}>Accept Bet</button>
-                                        <button type="button" className="button btn btn-secondary  btn-sm" onClick={rejectBet}>Reject Bet</button>
+                                        <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginRight: '10px' }} onClick={acceptBet}>Accept Bet</button>
+                                        <button type="button" className=" btn btn-secondary  btn-sm" onClick={rejectBet}>Reject Bet</button>
                                     </div>
 
                                 </Tab>
@@ -389,7 +390,7 @@ const Connected = (props) => {
                                         <thead>
                                             <tr>
                                                 {OracleActiveHeader.map((header, index) => (
-                                                    <th key={index}>{header}</th>
+                                                    <th key={index} className='px-3'>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -398,19 +399,35 @@ const Connected = (props) => {
                                             {OracleActiveList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex}>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>{cell}</td>
                                                     ))}
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
+                                    <div class='col-md-5 mt-4'>
+                                        <input
+                                            type="text"
+                                            value={BetIDOracle}
+                                            onChange={(event) => setBetIDOracle(event.target.value)}
+                                            placeholder="Enter bet ID"
+                                            style={{ marginRight: '7px' }}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={BetResult}
+                                            onChange={(event) => setBetResult(event.target.value)}
+                                            placeholder="Enter bet result"
+                                        />
+                                        <button class="btn btn-secondary  btn-sm" style={{ marginLeft: '7px' }} onClick={postResult}>postResult</button>
+                                    </div>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
                                     <table>
                                         <thead>
                                             <tr>
                                                 {OracleCompleteHeader.map((header, index) => (
-                                                    <th key={index}>{header}</th>
+                                                    <th key={index} className='px-3'>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -419,7 +436,7 @@ const Connected = (props) => {
                                             {OracleCompleteList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex}>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>{cell}</td>
                                                     ))}
                                                 </tr>
                                             ))}
@@ -428,20 +445,7 @@ const Connected = (props) => {
                                 </Tab>
                             </Tabs>
 
-                            <input
-                                type="text"
-                                value={BetIDOracle}
-                                onChange={(event) => setBetIDOracle(event.target.value)}
-                                placeholder="Enter bet ID"
-                            />
-                            <input
-                                type="text"
-                                value={BetResult}
-                                onChange={(event) => setBetResult(event.target.value)}
-                                placeholder="Enter bet result"
-                            />
-                            <button class="btn btn-secondary  btn-sm" onClick={postResult}>postResult</button>
-                            <p></p>
+
                         </Card.Body>
                     </Card>
                 </Col>
