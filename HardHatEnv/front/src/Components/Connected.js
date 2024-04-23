@@ -35,9 +35,9 @@ const Connected = (props) => {
     const [OracleActiveList, setOracleActiveList] = useState([]);
     const [OracleCompleteList, setOracleCompleteList] = useState([]);
 
-    const PendingHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Status"];
-    const ActiveHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position"];
-    const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L"];
+    const PendingHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Status", "Opponent Address", "Oracle Address"];
+    const ActiveHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
+    const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L", "Opponent Address", "Oracle Address"];
     const OracleActiveHeader = ["ID", "Description", "Status"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
     // const completeHeader = ["ID", "Amount", "Description", "Position", "Result"];
@@ -86,8 +86,9 @@ const Connected = (props) => {
     };
 
     const postResult = async () => {
+        const trResult = BetResult ? BetOutcome.TRUE : BetOutcome.FALSE;
         try {
-            const txResponse = await contract.setBetOutcome(BetIDOracle, BetResult)
+            const txResponse = await contract.setBetOutcome(BetIDOracle, trResult)
             await txResponse.wait();
         } catch (error) {
             console.error('Failed to set the outcome:', error);
@@ -105,12 +106,12 @@ const Connected = (props) => {
 
     const placeBet = async () => {
         // handle the bet placement logic
-
+        const trPosition = betPosition ? BetOutcome.TRUE : BetOutcome.FALSE;
         try {
             const options = {
                 value: ethers.utils.parseEther(orignBetAmount)
             }
-            const txResponse = await contract.createBet(parseInt(betPosition), oracleAdress, betDes, betRecipient, ethers.utils.parseEther(takerBetAmount), options)
+            const txResponse = await contract.createBet(trPosition, oracleAdress, betDes, betRecipient, ethers.utils.parseEther(takerBetAmount), options)
             await txResponse.wait();
         } catch (error) {
             console.error("Failed to create the bet", error);
@@ -139,15 +140,16 @@ const Connected = (props) => {
         for (var i = 0; i < betIndex; i++) {
 
             try {
-                var gameStatus = (await contract.getGameStatus(i)).toNumber();
-            }
-            catch
-            {
+                await contract.checkPermissions(i, props.account);
+            } catch {
                 continue;
             }
+
+            var gameStatus = (await contract.getGameStatus(i)).toNumber();
             console.log(gameStatus);
             if (gameStatus == GameStatus.VOIDED) continue;
-            const OracleAddr = await contract.getOracleAddress(i);
+
+            var OracleAddr = await contract.getOracleAddress(i);
             const OriginAddr = await contract.getOriginatorAddress(i);
             const TakerAddr = await contract.getTakerAddress(i);
             const des = await contract.getBetDescription(i);
@@ -178,30 +180,34 @@ const Connected = (props) => {
             if (OriginAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "True" : "False";
-                var amount = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
+                var userWager = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
+                var oppWager = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
                 var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
+                var oppAddr = ethers.utils.base64.encode(TakerAddr);
                 var status = "Waiting";
             }
             else if (TakerAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "False" : "True";
-                var amount = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
+                var userWager = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
+                var oppWager = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
                 var userStatus = (await contract.getTakerStatus(i)).toNumber();
+                var oppAddr = ethers.utils.base64.encode(OriginAddr);
                 var status = "Resp Req";
             }
             else continue;
 
-            console.log(amount);
+            console.log(userWager);
             console.log(userStatus);
+            OracleAddr = ethers.utils.base64.encode(OracleAddr)
 
             if (gameStatus == GameStatus.NOT_STARTED) {
-                var listObj = [i, amount.toString(), des, guess, status];
+                var listObj = [i, userWager, oppWager, des, guess, status, oppAddr, OracleAddr];
                 console.log(listObj);
-                // ?
                 setPendingList(BetList => [...BetList, listObj]);
             }
             else if (gameStatus == GameStatus.STARTED) {
-                var listObj = [i, amount.toString(), des, guess];
+                var listObj = [i, userWager, oppWager, des, guess, oppAddr, OracleAddr];
                 console.log(listObj);
                 await setActiveList(BetList => [...BetList, listObj]);
             }
@@ -209,7 +215,7 @@ const Connected = (props) => {
                 status = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
                 var result = (await contract.getOutcome(i)).toNumber();
                 result = (result == BetOutcome.TRUE) ? "True" : "False";
-                var listObj = [i, amount, des, result, status];
+                var listObj = [i, userWager, des, result, status, oppAddr, OracleAddr];
                 console.log(listObj);
                 await setCompleteList(BetList => [...BetList, listObj]);
             }
@@ -227,9 +233,9 @@ const Connected = (props) => {
             <h1>
                 BlockBet
             </h1>
-            <p>MetaMask account address: {props.account}</p>
+            <p>MetaMask account address <br/> {props.account} <br/> {ethers.utils.base64.encode(props.account)}</p>
             <p>Bet Count: {betInd} / 65536</p>
-            <button type="button" class="btn btn-secondary  btn-sm" style={{ marginBottom: '10px' }} onClick={updateLists}>Refresh</button>
+            <button type="button" className="btn btn-secondary  btn-sm" style={{ marginBottom: '10px' }} onClick={updateLists}>Refresh</button>
 
             <Row>
                 <Col>
@@ -271,17 +277,17 @@ const Connected = (props) => {
                                     id="BetPositionTrue"
                                     checked={betPosition === true}
                                     onChange={(event) => setBetPosition(true)}
-                                    class='radio'
+                                    className='radio'
                                 />
-                                <label for="BetResultTrue">True</label>
+                                <label>True</label>
                                 <input
                                     type="radio"
                                     id="BetPositionFalse"
                                     checked={betPosition === false}
                                     onChange={(event) => setBetPosition(false)}
-                                    class='radio'
+                                    className='radio'
                                 />
-                                <label for="BetResultFalse">False</label><br/>
+                                <label>False</label><br/>
                             </div>
                             <div className="mb-1">
                                 <input
@@ -317,7 +323,7 @@ const Connected = (props) => {
                                 className="tabs"
                             >
                                 <Tab eventKey="pending" title="Pending">
-                                    <table class='betTable mt-3'>
+                                    <table className='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {PendingHeader.map((header, index) => (
@@ -336,7 +342,7 @@ const Connected = (props) => {
                                             ))}
                                         </tbody>
                                     </table>
-                                    <div class='mt-4'>
+                                    <div className='mt-4'>
                                         <input
                                             className='input-box '
                                             type="text"
@@ -346,14 +352,14 @@ const Connected = (props) => {
                                             // style={{ marginRight: '10px' }}
                                         />
                                     </div>
-                                    <div class='mt-2'>
+                                    <div className='mt-2'>
                                         <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginRight: '5px' }} onClick={acceptBet}>Accept Bet</button>
                                         <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginLeft: '5px' }} onClick={rejectBet}>Reject Bet</button>
                                     </div>
 
                                 </Tab>
                                 <Tab eventKey="active" title="Active">
-                                    <table class='betTable mt-3'>
+                                    <table className='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {ActiveHeader.map((header, index) => (
@@ -374,7 +380,7 @@ const Connected = (props) => {
                                     </table>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
-                                    <table class='betTable mt-3'>
+                                    <table className='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {CompleteHeader.map((header, index) => (
@@ -399,7 +405,7 @@ const Connected = (props) => {
                     </Card>
                 </Col>
             </Row>
-            <Row>
+            <Row className="mb-5">
                 <Col>
                     <Card>
                         <Card.Header>Oracle List</Card.Header>
@@ -410,7 +416,7 @@ const Connected = (props) => {
                                 className="tabs"
                             >
                                 <Tab eventKey="active" title="Active">
-                                    <table class='betTable mt-3'>
+                                    <table className='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {OracleActiveHeader.map((header, index) => (
@@ -429,7 +435,7 @@ const Connected = (props) => {
                                             ))}
                                         </tbody>
                                     </table>
-                                    <div class='mt-4'>
+                                    <div className='mt-4'>
                                         <input
                                             type="number"
                                             value={BetIDOracle}
@@ -437,32 +443,32 @@ const Connected = (props) => {
                                             placeholder="Enter bet ID"
                                         />
                                     </div>
-                                    <div class='mt-1'>
+                                    <div className='mt-1'>
                                         <label>Result:</label>
                                         <input 
                                             type="radio"
                                             id="BetResultTrue"
                                             checked={BetResult === true}
                                             onChange={(event) => setBetResult(true)}
-                                            class='radio'
+                                            className='radio'
                                         />
-                                        <label for="BetResultTrue">True</label>
+                                        <label>True</label>
                                         <input
                                             type="radio"
                                             id="BetResultFalse"
                                             checked={BetResult === false}
                                             onChange={(event) => setBetResult(false)}
-                                            class='radio'
+                                            className='radio'
                                         />
-                                        <label for="BetResultFalse">False</label><br/>
+                                        <label>False</label><br/>
 
                                     </div>
-                                    <div class='mt-2'>
-                                        <button class="btn btn-secondary  btn-sm" onClick={postResult}>postResult</button>
+                                    <div className='mt-2'>
+                                        <button className="btn btn-secondary  btn-sm" onClick={postResult}>postResult</button>
                                     </div>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
-                                    <table class='betTable mt-3'>
+                                    <table className='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {OracleCompleteHeader.map((header, index) => (
