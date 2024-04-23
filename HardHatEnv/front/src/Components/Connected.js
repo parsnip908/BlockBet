@@ -16,8 +16,10 @@ import './Connected.css'
 const Connected = (props) => {
     const contract = props.contract;
 
-    const [orignBetAmount, setOrignBetAmount] = useState('');
-    const [takerBetAmount, setTakerBetAmount] = useState('');
+    const [OriginWager, setOriginWager] = useState('');
+    const [TakerWager, setTakerWager] = useState('');
+    const [OrignUnit, setOrignUnit] = useState('ether');
+    const [TakerUnit, setTakerUnit] = useState('ether');
     const [betDes, setBetDes] = useState('');
     const [betPosition, setBetPosition] = useState(true);
     const [betRecipient, setRecipient] = useState('');
@@ -40,8 +42,9 @@ const Connected = (props) => {
     const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L", "Opponent Address", "Oracle Address"];
     const OracleActiveHeader = ["ID", "Description", "Status"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
-    // const completeHeader = ["ID", "Amount", "Description", "Position", "Result"];
 
+    const pow15 = (ethers.BigNumber.from(10)).pow(15);
+    const pow6 = (ethers.BigNumber.from(10)).pow(6);
 
     const acceptBet = async () => {
         // check if it is a valid ID
@@ -51,9 +54,9 @@ const Connected = (props) => {
         }
         try {
 
-            const amount = await contract.getTakerBetAmount(BetID);
+            const wager = await contract.getTakerBetAmount(BetID);
             const options = {
-                value: amount,
+                value: wager,
                 gasLimit: 100000
             }
 
@@ -109,9 +112,9 @@ const Connected = (props) => {
         const trPosition = betPosition ? BetOutcome.TRUE : BetOutcome.FALSE;
         try {
             const options = {
-                value: ethers.utils.parseEther(orignBetAmount)
+                value: ethers.utils.parseUnits(OriginWager, OrignUnit)
             }
-            const txResponse = await contract.createBet(trPosition, oracleAdress, betDes, betRecipient, ethers.utils.parseEther(takerBetAmount), options)
+            const txResponse = await contract.createBet(trPosition, oracleAdress, betDes, betRecipient, ethers.utils.parseUnits(TakerWager, TakerUnit), options)
             await txResponse.wait();
         } catch (error) {
             console.error("Failed to create the bet", error);
@@ -119,9 +122,9 @@ const Connected = (props) => {
             return;
         }
 
-        // Reset bet amount after placing the bet
-        setTakerBetAmount('');
-        setOrignBetAmount('');
+        // Reset wager after placing the bet
+        setTakerWager('');
+        setOriginWager('');
     };
 
     const updateLists = async () => {
@@ -160,7 +163,6 @@ const Connected = (props) => {
             console.log(des);
 
             if (OracleAddr == props.account) {
-                console.log("oracle parse")
                 if (gameStatus == GameStatus.NOT_STARTED) {
                     var listObj = [i, des, "Waiting"];
                     await setOracleActiveList(BetList => [...BetList, listObj]);
@@ -180,8 +182,8 @@ const Connected = (props) => {
             if (OriginAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "True" : "False";
-                var userWager = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
-                var oppWager = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
+                var userWager = parseWei(await contract.getOriginatorBetAmount(i));
+                var oppWager = parseWei(await contract.getTakerBetAmount(i));
                 var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
                 var oppAddr = ethers.utils.base64.encode(TakerAddr);
                 var status = "Waiting";
@@ -189,8 +191,8 @@ const Connected = (props) => {
             else if (TakerAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "False" : "True";
-                var userWager = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
-                var oppWager = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
+                var userWager = parseWei(await contract.getTakerBetAmount(i));
+                var oppWager = parseWei(await contract.getOriginatorBetAmount(i));
                 var userStatus = (await contract.getTakerStatus(i)).toNumber();
                 var oppAddr = ethers.utils.base64.encode(OriginAddr);
                 var status = "Resp Req";
@@ -228,13 +230,27 @@ const Connected = (props) => {
         console.log(OracleCompleteList);
     };
 
+    function parseWei(wei)
+    {
+        if(wei >= pow15)
+            return ethers.utils.formatUnits(wei, 18) + ' eth';
+        else if(wei >= pow6)
+            return ethers.utils.formatUnits(wei, 9) + ' gwei';
+        else
+            return wei.toString() + ' wei';
+    };
+
     return (
         <Container>
             <h1>
                 BlockBet
             </h1>
-            <p>MetaMask account address <br/> {props.account} <br/> {ethers.utils.base64.encode(props.account)}</p>
-            <p>Bet Count: {betInd} / 65536</p>
+            <p> MetaMask account address <br/>
+                {props.account} <br/>
+                {ethers.utils.base64.encode(props.account)} <br/>
+                <br/>
+                Bet Count: {betInd} / 65536
+            </p>
             <button type="button" className="btn btn-secondary  btn-sm" style={{ marginBottom: '10px' }} onClick={updateLists}>Refresh</button>
 
             <Row>
@@ -245,22 +261,30 @@ const Connected = (props) => {
                             <div className="mb-1">
                                 <input
                                     type="number"
-                                    value={orignBetAmount}
-                                    onChange={(event) => setOrignBetAmount(event.target.value)}
+                                    value={OriginWager}
+                                    onChange={(event) => setOriginWager(event.target.value)}
                                     placeholder="Enter your wager"
                                     style={{ marginRight: '5px' }}
                                 />
-                                <label>eth</label>
+                                <select value={OrignUnit} onChange={(event) => setOrignUnit(event.target.value)}>
+                                    <option value='ether'>eth</option>
+                                    <option value='gwei'>gwei</option>
+                                    <option value='wei'>wei</option>
+                                </select>
                             </div>
                             <div className="mb-1">
                                 <input
                                     type="number"
-                                    value={takerBetAmount}
-                                    onChange={(event) => setTakerBetAmount(event.target.value)}
+                                    value={TakerWager}
+                                    onChange={(event) => setTakerWager(event.target.value)}
                                     placeholder="Enter opponent wager"
                                     style={{ marginRight: '5px' }}
                                 />
-                                <label>eth</label>
+                                <select value={TakerUnit} onChange={(event) => setTakerUnit(event.target.value)}>
+                                    <option value='ether'>eth</option>
+                                    <option value='gwei'>gwei</option>
+                                    <option value='wei'>wei</option>
+                                </select>
                             </div>
                             <div className="mb-1">
                                 <input
