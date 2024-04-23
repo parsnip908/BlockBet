@@ -67,6 +67,7 @@ const Connected = (props) => {
             const txResponse = await contract.takeBet(BetID, options);
             await txResponse.wait();
             console.log('Bet accepted successfully.');
+            setBetID('');
 
         } catch (error) {
             // const { reason } = await errorDecoder.decode(error);
@@ -85,6 +86,7 @@ const Connected = (props) => {
             const txResponse = await contract.denyBet(BetID, {});
             await txResponse.wait();
             console.log('You have rejected the bet.');
+            setBetID('');
 
         } catch (error) {
             console.error("Failed to reject the bet:", error);
@@ -113,8 +115,7 @@ const Connected = (props) => {
 
     const placeBet = async () => {
         // handle the bet placement logic
-        if(props.account == betRecipient)
-        {
+        if (props.account == betRecipient) {
             console.error("opponent is same as user");
             alert("Cannot make a bet with yourself.")
             return
@@ -220,7 +221,7 @@ const Connected = (props) => {
 
                 var listObj = [i, userWager, oppWager, des, guess, oppAddr, OracleAddr];
                 console.log(listObj);
-                if(status)
+                if (status)
                     setPendingList(BetList => [...BetList, listObj]);
                 else
                     setSentList(BetList => [...BetList, listObj]);
@@ -249,27 +250,35 @@ const Connected = (props) => {
         setRefreshing(false);
     };
 
-    function parseWei(wei)
-    {
-        if(wei >= pow15)
+    function parseWei(wei) {
+        if (wei >= pow15)
             return ethers.utils.formatUnits(wei, 18) + ' eth';
-        else if(wei >= pow6)
+        else if (wei >= pow6)
             return ethers.utils.formatUnits(wei, 9) + ' gwei';
         else
             return wei.toString() + ' wei';
     };
 
+    const truncateAddress = (address) => {
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    };
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(props.account).then(() => {
+            // Handle the success case - show a message or change the state.
+            console.log('Address copied to clipboard!');
+        }).catch(err => {
+            // Handle the error case
+            console.error('Failed to copy address: ', err);
+        });
+    };
     return (
         <Container>
             <h1>
                 BlockBet
             </h1>
-            <p> MetaMask account address <br/>
-                {props.account} <br/>
-                {ethers.utils.base64.encode(props.account)} <br/>
-                <br/>
-                Bet Count: {betInd} / 65536
-            </p>
+            <p>MetaMask account address <br /> {props.account} <br /> {ethers.utils.base64.encode(props.account)}</p>
+            <p>Bet Count: {betInd} / 65536</p>
             <button
                 type="button"
                 className="btn btn-secondary  btn-sm"
@@ -279,11 +288,10 @@ const Connected = (props) => {
             >
                 Refresh
             </button>
-
             <Row>
                 <Col>
-                    <Card>
-                        <CardHeader>Create Bet</CardHeader>
+                    <Card className='mb-4'>
+                        <CardHeader as="h5">Create Bet</CardHeader>
                         <CardBody>
                             <div className="mb-1">
                                 <input
@@ -323,7 +331,7 @@ const Connected = (props) => {
                             </div>
                             <div className="mb-2">
                                 <label>Result:</label>
-                                <input 
+                                <input
                                     type="radio"
                                     id="BetPositionTrue"
                                     checked={betPosition === true}
@@ -338,7 +346,7 @@ const Connected = (props) => {
                                     onChange={(event) => setBetPosition(false)}
                                     className='radio'
                                 />
-                                <label>False</label><br/>
+                                <label>False</label><br />
                             </div>
                             <div className="mb-1">
                                 <input
@@ -365,8 +373,8 @@ const Connected = (props) => {
 
             <Row className="my-4">
                 <Col>
-                    <Card>
-                        <Card.Header>Bet List</Card.Header>
+                    <Card className='mb-4'>
+                        <Card.Header as="h5">Bet List</Card.Header>
                         <Card.Body>
                             <Tabs
                                 defaultActiveKey="pending"
@@ -400,7 +408,7 @@ const Connected = (props) => {
                                             value={BetID}
                                             onChange={(event) => setBetID(event.target.value)}
                                             placeholder="Enter bet ID"
-                                            // style={{ marginRight: '10px' }}
+                                        // style={{ marginRight: '10px' }}
                                         />
                                     </div>
                                     <div className='mt-2'>
@@ -435,7 +443,7 @@ const Connected = (props) => {
                                         <thead>
                                             <tr>
                                                 {ActiveHeader.map((header, index) => (
-                                                    <th key={index} className='px-3'>{header}</th>
+                                                    <th scope="col" key={index} className='px-3'>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -479,8 +487,8 @@ const Connected = (props) => {
             </Row>
             <Row className="mb-5">
                 <Col>
-                    <Card>
-                        <Card.Header>Oracle List</Card.Header>
+                    <Card className='mb-4'>
+                        <Card.Header as="h5">Oracle List</Card.Header>
                         <Card.Body>
                             <Tabs
                                 defaultActiveKey="active"
@@ -517,7 +525,7 @@ const Connected = (props) => {
                                     </div>
                                     <div className='mt-1'>
                                         <label>Result:</label>
-                                        <input 
+                                        <input
                                             type="radio"
                                             id="BetResultTrue"
                                             checked={BetResult === true}
@@ -532,7 +540,7 @@ const Connected = (props) => {
                                             onChange={(event) => setBetResult(false)}
                                             className='radio'
                                         />
-                                        <label>False</label><br/>
+                                        <label>False</label><br />
 
                                     </div>
                                     <div className='mt-2'>

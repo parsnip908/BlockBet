@@ -17,6 +17,7 @@ function App() {
   const [contract, setContract] = useState(null);
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [balance, setBalance] = useState(0);
 
   const connectMetaMask = async () => {
     if (window.ethereum) { // Check if MetaMask is installed
@@ -27,6 +28,8 @@ function App() {
         const signer = provider.getSigner();
         const address = await signer.getAddress();
         await setAccount(address)
+        const balance = await signer.getBalance();
+        // await setBalance(balance);
         console.log(`Connected to wallet: ${address}`);
         await setIsConnected(true);
         console.log(`isConnected: ${isConnected}`);
@@ -41,11 +44,12 @@ function App() {
     }
   };
   return (
-    <div className="App">
+    <div className="App bg-light">
       {isConnected ?
         (<Connected
           account={account}
           contract={contract}
+        // balance={balance}
         />)
         : (<Login connectWallet={connectMetaMask} />)}
     </div>
