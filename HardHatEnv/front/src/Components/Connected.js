@@ -28,7 +28,6 @@ const Connected = (props) => {
     const [BetResult, setBetResult] = useState('');
 
     const [betInd, setBetInd_] = useState(0);
-    const [BetList, setBetList] = useState([]);
     const [PendingList, setPendingList] = useState([]);
     const [ActiveList, setActiveList] = useState([]);
     const [CompleteList, setCompleteList] = useState([]);
@@ -37,12 +36,11 @@ const Connected = (props) => {
 
     const PendingHeader = ["ID", "Taker bet amount", "Originator bet amount ", "Description", "Position", "Status"];
     const ActiveHeader = ["ID", "Amount", "Description", "Position"];
+    const CompleteHeader = ["ID", "Amount", "Description", "Result", "W/L"];
+    const OracleActiveHeader = ["ID", "Description", "Status"];
+    const OracleCompleteHeader = ["ID", "Description", "Result"];
     const completeHeader = ["ID", "Amount", "Description", "Position", "Result"];
 
-    // const setBetInd = async () => {
-    //     const betIndex = await contract.getBetInd();
-    //     setBetInd_(betIndex.toNumber());
-    // };
 
     const acceptBet = async () => {
         // check if it is a valid ID
@@ -67,8 +65,8 @@ const Connected = (props) => {
             console.error("Failed to accept the bet:", error);
             alert("Transcation failded: " + error.message)
         }
-
     };
+
     const rejectBet = async () => {
         if (!BetID) {
             alert("Please enter a valid Bet ID.");
@@ -122,58 +120,64 @@ const Connected = (props) => {
         console.log(betIndex.toNumber());
 
         // reset lists
-        setBetList([]);
         setPendingList([]);
         setActiveList([]);
         setCompleteList([]);
+        setOracleActiveList([]);
+        setOracleCompleteList([]);
 
         for (let i = 0; i < betIndex; i++) {
 
             const gameStatus = (await contract.getGameStatus(i)).toNumber();
             console.log(gameStatus);
-
             if (gameStatus == GameStatus.VOIDED) continue;
 
             const OracleAddr = await contract.getOracleAddress(i);
-            console.log(OracleAddr);
-            if (OracleAddr == props.account) {
-                console.log("oracle parse")
-                // oracle parse
-
-            }
-
             const OriginAddr = await contract.getOriginatorAddress(i);
             const TakerAddr = await contract.getTakerAddress(i);
+            const des = await contract.getBetDescription(i);
+
+            console.log(OracleAddr);
             console.log(OriginAddr);
             console.log(TakerAddr);
+            console.log(des);
 
-            var guess = null;
-            var amount
-            let outcome
+            if (OracleAddr == props.account) {
+                console.log("oracle parse")
+                if (gameStatus == GameStatus.NOT_STARTED) {
+                    var listObj = [i, des, "Waiting"];
+                    await setOracleActiveList(BetList => [...BetList, listObj]);
+                }
+                else if (gameStatus == GameStatus.STARTED) {
+                    var listObj = [i, des, "Resp Req"];
+                    await setOracleActiveList(BetList => [...BetList, listObj]);
+                }
+                else if (gameStatus == GameStatus.COMPLETE) {
+                    var result = (await contract.getOutcome(i)).toNumber();
+                    result = (result == BetOutcome.TRUE) ? "True" : "False";
+                    var listObj = [i, des, result];
+                    await setOracleCompleteList(BetList => [...BetList, listObj]);
+                }
+            }
+
             if (OriginAddr == props.account) {
-                guess = await contract.getOriginatorGuess(i);
-                console.log(guess.type)
+                var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "True" : "False";
-                amount = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
-                outcome = await contract.getBetOutcome(i)[4];
-                outcome = (outcome == 1) ? "Win" : "Lose"
+                var amount = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
+                var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
                 var status = "Waiting";
             }
             else if (TakerAddr == props.account) {
-                guess = await contract.getOriginatorGuess(i);
+                var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "False" : "True";
-                amount = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
-                outcome = await contract.getBetOutcome(i)[6];
-                outcome = (outcome == 1) ? "Win" : "Lose"
+                var amount = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
+                var userStatus = (await contract.getTakerStatus(i)).toNumber();
                 var status = "Resp Req";
             }
             else continue;
 
-            const des = await contract.getBetDescription(i);
-            const takerStatus = (await contract.getTakerStatus(i)).toNumber();
-            console.log(des);
             console.log(amount);
-            console.log(takerStatus);
+            console.log(userStatus);
 
             if (gameStatus == GameStatus.NOT_STARTED) {
                 var listObj = [i, amount.toString(), des, guess, status];
@@ -183,35 +187,34 @@ const Connected = (props) => {
             }
             else if (gameStatus == GameStatus.STARTED) {
                 var listObj = [i, amount.toString(), des, guess];
-                setActiveList(BetList => [...BetList, listObj]);
                 console.log(listObj);
+                await setActiveList(BetList => [...BetList, listObj]);
             }
             else if (gameStatus == GameStatus.COMPLETE) {
-                let listObj = [i, amount, des, guess, outcome];
-                setCompleteList(completeList => [...completeList, listObj]);
+                status = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
+                var result = (await contract.getOutcome(i)).toNumber();
+                result = (result == BetOutcome.TRUE) ? "True" : "False";
+                var listObj = [i, amount, des, result, status];
                 console.log(listObj);
+                await setCompleteList(BetList => [...BetList, listObj]);
             }
-            // ?
-            await setBetList(BetList => [...BetList, des]);
         }
-        console.log(BetList);
-        console.log(PendingList);
 
+        console.log(PendingList);
+        console.log(ActiveList);
+        console.log(CompleteList);
+        console.log(OracleActiveList);
+        console.log(OracleCompleteList);
     };
 
     return (
         <Container>
             <h1>
-                Your are connected to MetaMask!
+                BlockBet
             </h1>
-            <p>Account address: {props.account}</p>
-            <p>Bet Count: {betInd}</p>
-            {/*            <ul>
-                {BetList.map((item, index) => (
-                    <li key={index}>{item}</li>
-                ))}
-            </ul>
-*/}            <button type="button" class="btn btn-secondary  btn-sm" onClick={updateLists}>Refresh</button>
+            <p>MetaMask account address: {props.account}</p>
+            <p>Bet Count: {betInd} / 65536</p>
+            <button type="button" class="btn btn-secondary  btn-sm" onClick={updateLists}>Refresh</button>
 
             <Row>
                 <Col>
@@ -341,8 +344,8 @@ const Connected = (props) => {
                                     <table>
                                         <thead>
                                             <tr>
-                                                {completeHeader.map((header, index) => (
-                                                    <th key={index} className='px-3'>{header}</th>
+                                                {CompleteHeader.map((header, index) => (
+                                                    <th key={index}>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -351,7 +354,7 @@ const Connected = (props) => {
                                             {CompleteList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex} className='px-3'>{cell}</td>
+                                                        <td key={cellIndex}>{cell}</td>
                                                     ))}
                                                 </tr>
                                             ))}
@@ -375,24 +378,59 @@ const Connected = (props) => {
                                 className="mb-3"
                             >
                                 <Tab eventKey="active" title="Active">
-                                    <p>ID   Description                     Status</p>
-                                    <p>65   Will I get an A in Microarch?   response needed</p>
-                                    <p>23   Will this website work?         waiting</p>
-                                    <p></p>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                {OracleActiveHeader.map((header, index) => (
+                                                    <th key={index}>{header}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {OracleActiveList.map((row, rowIndex) => (
+                                                <tr key={rowIndex}>
+                                                    {row.map((cell, cellIndex) => (
+                                                        <td key={cellIndex}>{cell}</td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
-                                    Tab content for Complete
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                {OracleCompleteHeader.map((header, index) => (
+                                                    <th key={index}>{header}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {OracleCompleteList.map((row, rowIndex) => (
+                                                <tr key={rowIndex}>
+                                                    {row.map((cell, cellIndex) => (
+                                                        <td key={cellIndex}>{cell}</td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </Tab>
                             </Tabs>
 
                             <input
                                 type="text"
                                 value={BetIDOracle}
+                                onChange={(event) => setBetIDOracle(event.target.value)}
                                 placeholder="Enter bet ID"
                             />
                             <input
                                 type="text"
                                 value={BetResult}
+                                onChange={(event) => setBetResult(event.target.value)}
                                 placeholder="Enter bet result"
                             />
                             <button class="btn btn-secondary  btn-sm" onClick={postResult}>postResult</button>

@@ -4,7 +4,8 @@ const Login = (props) => {
     return (
         <div className='login-container'>
             <h1>
-                Welcome to the decentralize BlockBet
+                Welcome to BlockBet
+                {props.isConnected}
             </h1>
             <button variant="warning" size="sm" onClick={props.connectWallet}>Connect to MetaMask</button>
         </div>
