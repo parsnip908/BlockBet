@@ -116,33 +116,33 @@ contract BlockBet {
         games[betID].originator.addr.transfer(games[betID].originator.betAmount);
     }
 
-    function setBetOutcome(uint256 betID, uint _outcome) public {
-        require(msg.sender == games[betID].oracle, "oracle address is incorrect");
-        require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
-        require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
+    // function setBetOutcome(uint256 betID, uint _outcome) public {
+    //     require(msg.sender == games[betID].oracle, "oracle address is incorrect");
+    //     require(games[betID].originator.status == STATUS_PENDING && games[betID].taker.status == STATUS_PENDING, "BetterBet status of either originator or taker is not pending");
+    //     require(_outcome == STATUS_TRUE || _outcome == STATUS_FALSE, "outcome must be 1 or 2");
 
-        console.log(
-            "Setting Bet[%s] outcome to %s from %s",
-            betID,
-            _outcome,
-            msg.sender
-        );
+    //     console.log(
+    //         "Setting Bet[%s] outcome to %s from %s",
+    //         betID,
+    //         _outcome,
+    //         msg.sender
+    //     );
 
-        games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
-        games[betID].status = STATUS_COMPLETE;
+    //     games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
+    //     games[betID].status = STATUS_COMPLETE;
 
-        // if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome){
-        //     games[betID].originator.status = STATUS_WIN;
-        //     games[betID].taker.status = STATUS_LOSE;
-        // }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome){
-        //     games[betID].originator.status = STATUS_LOSE;
-        //     games[betID].taker.status = STATUS_WIN;
-        // }else{
-        //     games[betID].originator.status = STATUS_ERROR;
-        //     games[betID].taker.status = STATUS_ERROR;
-        //     games[betID].status = STATUS_ERROR;
-        // }
-    }
+    //     // if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome){
+    //     //     games[betID].originator.status = STATUS_WIN;
+    //     //     games[betID].taker.status = STATUS_LOSE;
+    //     // }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome){
+    //     //     games[betID].originator.status = STATUS_LOSE;
+    //     //     games[betID].taker.status = STATUS_WIN;
+    //     // }else{
+    //     //     games[betID].originator.status = STATUS_ERROR;
+    //     //     games[betID].taker.status = STATUS_ERROR;
+    //     //     games[betID].status = STATUS_ERROR;
+    //     // }
+    // }
 
     function payout(uint256 betID, uint _outcome) public payable {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
