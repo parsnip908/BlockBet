@@ -130,10 +130,15 @@ const Connected = (props) => {
 
         for (var i = 0; i < betIndex; i++) {
 
-            const gameStatus = (await contract.getGameStatus(i)).toNumber();
+            try {
+                var gameStatus = (await contract.getGameStatus(i)).toNumber();
+            }
+            catch
+            {
+                continue;
+            }
             console.log(gameStatus);
             if (gameStatus == GameStatus.VOIDED) continue;
-
             const OracleAddr = await contract.getOracleAddress(i);
             const OriginAddr = await contract.getOriginatorAddress(i);
             const TakerAddr = await contract.getTakerAddress(i);
@@ -347,7 +352,7 @@ const Connected = (props) => {
                                         <thead>
                                             <tr>
                                                 {CompleteHeader.map((header, index) => (
-                                                    <th key={index}>{header}</th>
+                                                    <th key={index} className='px-3'>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -356,7 +361,7 @@ const Connected = (props) => {
                                             {CompleteList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex}>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>{cell}</td>
                                                     ))}
                                                 </tr>
                                             ))}
