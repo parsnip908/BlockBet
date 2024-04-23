@@ -27,7 +27,6 @@ const Connected = (props) => {
     const [BetResult, setBetResult] = useState('');
 
     const [betInd, setBetInd_] = useState(0);
-    const [BetList, setBetList] = useState([]);
     const [PendingList, setPendingList] = useState([]);
     const [ActiveList, setActiveList] = useState([]);
     const [CompleteList, setCompleteList] = useState([]);
@@ -40,10 +39,6 @@ const Connected = (props) => {
     const OracleActiveHeader =   ["ID", "Description", "Status"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
     
-    // const setBetInd = async () => {
-    //     const betIndex = await contract.getBetInd();
-    //     setBetInd_(betIndex.toNumber());
-    // };
 
     const acceptBet = async () => {
         // check if it is a valid ID
@@ -68,8 +63,8 @@ const Connected = (props) => {
             console.error("Failed to accept the bet:", error);
             alert("Transcation failded: " + error.message)
         }
-
     };
+
     const rejectBet = async () => {
         if (!BetID) {
             alert("Please enter a valid Bet ID.");
@@ -122,7 +117,6 @@ const Connected = (props) => {
         console.log(betIndex.toNumber());
 
         // reset lists
-        // await setBetList([]);
         setPendingList([]);
         setActiveList([]);
         setCompleteList([]);
@@ -135,7 +129,6 @@ const Connected = (props) => {
             const gameStatus = (await contract.getGameStatus(i)).toNumber();
             console.log(gameStatus);
             if(gameStatus == GameStatus.VOIDED) continue;
-
 
             const OracleAddr = await contract.getOracleAddress(i);
             const OriginAddr = await contract.getOriginatorAddress(i);
@@ -211,17 +204,13 @@ const Connected = (props) => {
                 console.log(listObj);
                 await setCompleteList(BetList => [...BetList, listObj]);
             }
-
-            // await setBetList(BetList => [...BetList, des]);
         }
-        // console.log(BetList);
+
         console.log(PendingList);
         console.log(ActiveList);
         console.log(CompleteList);
         console.log(OracleActiveList);
         console.log(OracleCompleteList);
-
-
     };
 
     return (
@@ -230,13 +219,8 @@ const Connected = (props) => {
                 BlockBet
             </h1>
             <p>MetaMask account address: {props.account}</p>
-            <p>Bet Count: {betInd}</p>
-{/*            <ul>
-                {BetList.map((item, index) => (
-                    <li key={index}>{item}</li>
-                ))}
-            </ul>
-*/}            <button type="button" class="btn btn-secondary  btn-sm" onClick={updateLists}>Refresh</button>
+            <p>Bet Count: {betInd} / 65536</p>
+            <button type="button" class="btn btn-secondary  btn-sm" onClick={updateLists}>Refresh</button>
 
             <Row>
                 <Col>
@@ -433,11 +417,13 @@ const Connected = (props) => {
                             <input
                                 type="text"
                                 value={BetIDOracle}
+                                onChange={(event) => setBetIDOracle(event.target.value)}
                                 placeholder="Enter bet ID"
                             />
                             <input
                                 type="text"
                                 value={BetResult}
+                                onChange={(event) => setBetResult(event.target.value)}
                                 placeholder="Enter bet result"
                             />
                             <button class="btn btn-secondary  btn-sm" onClick={postResult}>postResult</button>
