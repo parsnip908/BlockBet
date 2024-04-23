@@ -11,6 +11,7 @@ import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 
 import { BetterStatus, GameStatus, BetOutcome } from './../Constant/constant.js'
+import './Connected.css'
 
 const Connected = (props) => {
     const contract = props.contract;
@@ -18,14 +19,14 @@ const Connected = (props) => {
     const [orignBetAmount, setOrignBetAmount] = useState('');
     const [takerBetAmount, setTakerBetAmount] = useState('');
     const [betDes, setBetDes] = useState('');
-    const [betPosition, setBetPosition] = useState('');
+    const [betPosition, setBetPosition] = useState(true);
     const [betRecipient, setRecipient] = useState('');
     const [oracleAdress, setOracleAddress] = useState('');
 
     // const [walletAddress, setWalletAddress] = useState('');
     const [BetID, setBetID] = useState('');
     const [BetIDOracle, setBetIDOracle] = useState('');
-    const [BetResult, setBetResult] = useState('');
+    const [BetResult, setBetResult] = useState(true);
 
     const [betInd, setBetInd_] = useState(0);
     const [PendingList, setPendingList] = useState([]);
@@ -34,12 +35,12 @@ const Connected = (props) => {
     const [OracleActiveList, setOracleActiveList] = useState([]);
     const [OracleCompleteList, setOracleCompleteList] = useState([]);
 
-    const PendingHeader = ["ID", "Taker bet amount", "Originator bet amount ", "Description", "Position", "Status"];
-    const ActiveHeader = ["ID", "Amount", "Description", "Position"];
-    const CompleteHeader = ["ID", "Amount", "Description", "Result", "W/L"];
+    const PendingHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Status"];
+    const ActiveHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position"];
+    const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L"];
     const OracleActiveHeader = ["ID", "Description", "Status"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
-    const completeHeader = ["ID", "Amount", "Description", "Position", "Result"];
+    // const completeHeader = ["ID", "Amount", "Description", "Position", "Result"];
 
 
     const acceptBet = async () => {
@@ -88,10 +89,16 @@ const Connected = (props) => {
         try {
             const txResponse = await contract.setBetOutcome(BetIDOracle, BetResult)
             await txResponse.wait();
+        } catch (error) {
+            console.error('Failed to set the outcome:', error);
+            alert(`Transaction failed: ${error.message}`);
+        }
+
+        try {
             const txResponse2 = await contract.payout(BetIDOracle)
             await txResponse2.wait();
         } catch (error) {
-            console.error('Failed to set the outcome:', error);
+            console.error('Failed to payout:', error);
             alert(`Transaction failed: ${error.message}`);
         }
     };
@@ -108,6 +115,7 @@ const Connected = (props) => {
         } catch (error) {
             console.error("Failed to create the bet", error);
             alert("Transcation failded: " + error.message)
+            return;
         }
 
         // Reset bet amount after placing the bet
@@ -230,19 +238,23 @@ const Connected = (props) => {
                         <CardBody>
                             <div className="mb-1">
                                 <input
-                                    type="text"
+                                    type="number"
                                     value={orignBetAmount}
                                     onChange={(event) => setOrignBetAmount(event.target.value)}
-                                    placeholder="Enter bet amount"
+                                    placeholder="Enter your wager"
+                                    style={{ marginRight: '5px' }}
                                 />
+                                <label>eth</label>
                             </div>
                             <div className="mb-1">
                                 <input
-                                    type="text"
+                                    type="number"
                                     value={takerBetAmount}
                                     onChange={(event) => setTakerBetAmount(event.target.value)}
-                                    placeholder="Enter taker bet amount"
+                                    placeholder="Enter opponent wager"
+                                    style={{ marginRight: '5px' }}
                                 />
+                                <label>eth</label>
                             </div>
                             <div className="mb-1">
                                 <input
@@ -252,20 +264,31 @@ const Connected = (props) => {
                                     placeholder="Enter bet description"
                                 />
                             </div>
-                            <div className="mb-1">
-                                <input
-                                    type="text"
-                                    value={betPosition}
-                                    onChange={(event) => setBetPosition(event.target.value)}
-                                    placeholder="Enter bet position"
+                            <div className="mb-2">
+                                <label>Result:</label>
+                                <input 
+                                    type="radio"
+                                    id="BetPositionTrue"
+                                    checked={betPosition === true}
+                                    onChange={(event) => setBetPosition(true)}
+                                    class='radio'
                                 />
+                                <label for="BetResultTrue">True</label>
+                                <input
+                                    type="radio"
+                                    id="BetPositionFalse"
+                                    checked={betPosition === false}
+                                    onChange={(event) => setBetPosition(false)}
+                                    class='radio'
+                                />
+                                <label for="BetResultFalse">False</label><br/>
                             </div>
                             <div className="mb-1">
                                 <input
                                     type="text"
                                     value={betRecipient}
                                     onChange={(event) => setRecipient(event.target.value)}
-                                    placeholder="Enter participant address"
+                                    placeholder="Enter opponent address"
                                 />
                             </div>
                             <div className="mb-1">
@@ -291,10 +314,10 @@ const Connected = (props) => {
                             <Tabs
                                 defaultActiveKey="pending"
                                 id="Bet-list-tabs"
-                                className="mb-3"
+                                className="tabs"
                             >
                                 <Tab eventKey="pending" title="Pending">
-                                    <table>
+                                    <table class='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {PendingHeader.map((header, index) => (
@@ -313,22 +336,24 @@ const Connected = (props) => {
                                             ))}
                                         </tbody>
                                     </table>
-                                    <div class='col-md-4 mt-4'>
+                                    <div class='mt-4'>
                                         <input
                                             className='input-box '
                                             type="text"
                                             value={BetID}
                                             onChange={(event) => setBetID(event.target.value)}
                                             placeholder="Enter bet ID"
-                                            style={{ marginRight: '10px' }}
+                                            // style={{ marginRight: '10px' }}
                                         />
-                                        <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginRight: '10px' }} onClick={acceptBet}>Accept Bet</button>
-                                        <button type="button" className=" btn btn-secondary  btn-sm" onClick={rejectBet}>Reject Bet</button>
+                                    </div>
+                                    <div class='mt-2'>
+                                        <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginRight: '5px' }} onClick={acceptBet}>Accept Bet</button>
+                                        <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginLeft: '5px' }} onClick={rejectBet}>Reject Bet</button>
                                     </div>
 
                                 </Tab>
                                 <Tab eventKey="active" title="Active">
-                                    <table>
+                                    <table class='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {ActiveHeader.map((header, index) => (
@@ -349,7 +374,7 @@ const Connected = (props) => {
                                     </table>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
-                                    <table>
+                                    <table class='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {CompleteHeader.map((header, index) => (
@@ -370,7 +395,6 @@ const Connected = (props) => {
                                     </table>
                                 </Tab>
                             </Tabs>
-
                         </Card.Body>
                     </Card>
                 </Col>
@@ -383,10 +407,10 @@ const Connected = (props) => {
                             <Tabs
                                 defaultActiveKey="active"
                                 id="Oracle-list-tabs"
-                                className="mb-3"
+                                className="tabs"
                             >
                                 <Tab eventKey="active" title="Active">
-                                    <table>
+                                    <table class='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {OracleActiveHeader.map((header, index) => (
@@ -405,25 +429,40 @@ const Connected = (props) => {
                                             ))}
                                         </tbody>
                                     </table>
-                                    <div class='col-md-5 mt-4'>
+                                    <div class='mt-4'>
                                         <input
-                                            type="text"
+                                            type="number"
                                             value={BetIDOracle}
                                             onChange={(event) => setBetIDOracle(event.target.value)}
                                             placeholder="Enter bet ID"
-                                            style={{ marginRight: '7px' }}
                                         />
+                                    </div>
+                                    <div class='mt-1'>
+                                        <label>Result:</label>
+                                        <input 
+                                            type="radio"
+                                            id="BetResultTrue"
+                                            checked={BetResult === true}
+                                            onChange={(event) => setBetResult(true)}
+                                            class='radio'
+                                        />
+                                        <label for="BetResultTrue">True</label>
                                         <input
-                                            type="text"
-                                            value={BetResult}
-                                            onChange={(event) => setBetResult(event.target.value)}
-                                            placeholder="Enter bet result"
+                                            type="radio"
+                                            id="BetResultFalse"
+                                            checked={BetResult === false}
+                                            onChange={(event) => setBetResult(false)}
+                                            class='radio'
                                         />
-                                        <button class="btn btn-secondary  btn-sm" style={{ marginLeft: '7px' }} onClick={postResult}>postResult</button>
+                                        <label for="BetResultFalse">False</label><br/>
+
+                                    </div>
+                                    <div class='mt-2'>
+                                        <button class="btn btn-secondary  btn-sm" onClick={postResult}>postResult</button>
                                     </div>
                                 </Tab>
                                 <Tab eventKey="complete" title="Complete">
-                                    <table>
+                                    <table class='betTable mt-3'>
                                         <thead>
                                             <tr>
                                                 {OracleCompleteHeader.map((header, index) => (
