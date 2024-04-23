@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState, useEffect  } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, CardBody, CardHeader } from 'react-bootstrap'
@@ -15,13 +15,14 @@ import { BetterStatus, GameStatus, BetOutcome } from './../Constant/constant.js'
 const Connected = (props) => {
     const contract = props.contract;
 
-    const [betAmount, setBetAmount] = useState('');
+    const [orignBetAmount, setOrignBetAmount] = useState('');
+    const [takerBetAmount, setTakerBetAmount] = useState('');
     const [betDes, setBetDes] = useState('');
     const [betPosition, setBetPosition] = useState('');
     const [betRecipient, setRecipient] = useState('');
     const [oracleAdress, setOracleAddress] = useState('');
 
-    const [walletAddress, setWalletAddress] = useState('');
+    // const [walletAddress, setWalletAddress] = useState('');
     const [BetID, setBetID] = useState('');
     const [BetIDOracle, setBetIDOracle] = useState('');
     const [BetResult, setBetResult] = useState('');
@@ -33,12 +34,13 @@ const Connected = (props) => {
     const [OracleActiveList, setOracleActiveList] = useState([]);
     const [OracleCompleteList, setOracleCompleteList] = useState([]);
 
-    const PendingHeader = ["ID", "Amount", "Description", "Position", "Status"];
+    const PendingHeader = ["ID", "Taker bet amount", "Originator bet amount ", "Description", "Position", "Status"];
     const ActiveHeader = ["ID", "Amount", "Description", "Position"];
     const CompleteHeader = ["ID", "Amount", "Description", "Result", "W/L"];
-    const OracleActiveHeader =   ["ID", "Description", "Status"];
+    const OracleActiveHeader = ["ID", "Description", "Status"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
-    
+    const completeHeader = ["ID", "Amount", "Description", "Position", "Result"];
+
 
     const acceptBet = async () => {
         // check if it is a valid ID
@@ -84,8 +86,10 @@ const Connected = (props) => {
 
     const postResult = async () => {
         try {
-            const txResponse = await contract.setBetOutcome(BetID, BetResult)
+            const txResponse = await contract.setBetOutcome(BetIDOracle, BetResult)
             await txResponse.wait();
+            const txResponse2 = await contract.payout(BetIDOracle)
+            await txResponse2.wait();
         } catch (error) {
             console.error('Failed to set the outcome:', error);
             alert(`Transaction failed: ${error.message}`);
@@ -94,12 +98,12 @@ const Connected = (props) => {
 
     const placeBet = async () => {
         // handle the bet placement logic
-        console.log(`Placing bet of ${betAmount}`);
+
         try {
             const options = {
-                value: ethers.utils.parseEther(betAmount)
+                value: ethers.utils.parseEther(orignBetAmount)
             }
-            const txResponse = contract.createBet(parseInt(betPosition), oracleAdress, betDes, betRecipient, ethers.utils.parseEther(betAmount), options)
+            const txResponse = await contract.createBet(parseInt(betPosition), oracleAdress, betDes, betRecipient, ethers.utils.parseEther(takerBetAmount), options)
             await txResponse.wait();
         } catch (error) {
             console.error("Failed to create the bet", error);
@@ -107,7 +111,8 @@ const Connected = (props) => {
         }
 
         // Reset bet amount after placing the bet
-        setBetAmount('');
+        setTakerBetAmount('');
+        setOrignBetAmount('');
     };
 
     const updateLists = async () => {
@@ -123,12 +128,11 @@ const Connected = (props) => {
         setOracleActiveList([]);
         setOracleCompleteList([]);
 
-        for (var i = 0; i < betIndex; i++)
-        {
+        for (var i = 0; i < betIndex; i++) {
 
             const gameStatus = (await contract.getGameStatus(i)).toNumber();
             console.log(gameStatus);
-            if(gameStatus == GameStatus.VOIDED) continue;
+            if (gameStatus == GameStatus.VOIDED) continue;
 
             const OracleAddr = await contract.getOracleAddress(i);
             const OriginAddr = await contract.getOriginatorAddress(i);
@@ -140,38 +144,32 @@ const Connected = (props) => {
             console.log(TakerAddr);
             console.log(des);
 
-            if(OracleAddr == props.account)
-            {
+            if (OracleAddr == props.account) {
                 console.log("oracle parse")
-                if(gameStatus == GameStatus.NOT_STARTED)
-                {
+                if (gameStatus == GameStatus.NOT_STARTED) {
                     var listObj = [i, des, "Waiting"];
                     await setOracleActiveList(BetList => [...BetList, listObj]);
                 }
-                else if(gameStatus == GameStatus.STARTED)
-                {
+                else if (gameStatus == GameStatus.STARTED) {
                     var listObj = [i, des, "Resp Req"];
                     await setOracleActiveList(BetList => [...BetList, listObj]);
                 }
-                else if(gameStatus == GameStatus.COMPLETE)
-                {
+                else if (gameStatus == GameStatus.COMPLETE) {
                     var result = (await contract.getOutcome(i)).toNumber();
-                    result = (result == BetOutcome.TRUE) ? "True" : "False";                    
+                    result = (result == BetOutcome.TRUE) ? "True" : "False";
                     var listObj = [i, des, result];
                     await setOracleCompleteList(BetList => [...BetList, listObj]);
                 }
             }
 
-            if (OriginAddr == props.account)
-            {
+            if (OriginAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "True" : "False";
                 var amount = ethers.utils.formatEther(await contract.getOriginatorBetAmount(i));
                 var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
                 var status = "Waiting";
             }
-            else if(TakerAddr == props.account)
-            {
+            else if (TakerAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
                 guess = (guess == 1) ? "False" : "True";
                 var amount = ethers.utils.formatEther(await contract.getTakerBetAmount(i));
@@ -183,20 +181,18 @@ const Connected = (props) => {
             console.log(amount);
             console.log(userStatus);
 
-            if(gameStatus == GameStatus.NOT_STARTED)
-            {
+            if (gameStatus == GameStatus.NOT_STARTED) {
                 var listObj = [i, amount.toString(), des, guess, status];
                 console.log(listObj);
-                await setPendingList(BetList => [...BetList, listObj]);
+                // ?
+                setPendingList(BetList => [...BetList, listObj]);
             }
-            else if(gameStatus == GameStatus.STARTED)
-            {
+            else if (gameStatus == GameStatus.STARTED) {
                 var listObj = [i, amount.toString(), des, guess];
                 console.log(listObj);
                 await setActiveList(BetList => [...BetList, listObj]);
             }
-            else if(gameStatus == GameStatus.COMPLETE)
-            {
+            else if (gameStatus == GameStatus.COMPLETE) {
                 status = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
                 var result = (await contract.getOutcome(i)).toNumber();
                 result = (result == BetOutcome.TRUE) ? "True" : "False";
@@ -230,9 +226,17 @@ const Connected = (props) => {
                             <div className="mb-1">
                                 <input
                                     type="text"
-                                    value={betAmount}
-                                    onChange={(event) => setBetAmount(event.target.value)}
+                                    value={orignBetAmount}
+                                    onChange={(event) => setOrignBetAmount(event.target.value)}
                                     placeholder="Enter bet amount"
+                                />
+                            </div>
+                            <div className="mb-1">
+                                <input
+                                    type="text"
+                                    value={takerBetAmount}
+                                    onChange={(event) => setTakerBetAmount(event.target.value)}
+                                    placeholder="Enter taker bet amount"
                                 />
                             </div>
                             <div className="mb-1">
@@ -251,7 +255,7 @@ const Connected = (props) => {
                                     placeholder="Enter bet position"
                                 />
                             </div>
-                            <div class="mb-1">
+                            <div className="mb-1">
                                 <input
                                     type="text"
                                     value={betRecipient}
@@ -267,7 +271,7 @@ const Connected = (props) => {
                                     placeholder="Enter oracle address"
                                 />
                             </div>
-                            <button type="button" class="btn btn-secondary  btn-sm" onClick={placeBet}>Place Bet</button>
+                            <button type="button" className="btn btn-secondary  btn-sm" onClick={placeBet}>Place Bet</button>
                         </CardBody>
 
                     </Card>
@@ -289,7 +293,7 @@ const Connected = (props) => {
                                         <thead>
                                             <tr>
                                                 {PendingHeader.map((header, index) => (
-                                                    <th key={index}>{header}</th>
+                                                    <th key={index} className='px-3'>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -298,19 +302,31 @@ const Connected = (props) => {
                                             {PendingList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex}>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>{cell}</td>
                                                     ))}
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
+                                    <div class='action-section'>
+                                        <input
+                                            className='input-box '
+                                            type="text"
+                                            value={BetID}
+                                            onChange={(event) => setBetID(event.target.value)}
+                                            placeholder="Enter bet ID"
+                                        />
+                                        <button type="button" className="button btn btn-secondary  btn-sm" onClick={acceptBet}>Accept Bet</button>
+                                        <button type="button" className="button btn btn-secondary  btn-sm" onClick={rejectBet}>Reject Bet</button>
+                                    </div>
+
                                 </Tab>
                                 <Tab eventKey="active" title="Active">
                                     <table>
                                         <thead>
                                             <tr>
                                                 {ActiveHeader.map((header, index) => (
-                                                    <th key={index}>{header}</th>
+                                                    <th key={index} className='px-3'>{header}</th>
                                                 ))}
                                             </tr>
                                         </thead>
@@ -319,7 +335,7 @@ const Connected = (props) => {
                                             {ActiveList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex}>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>{cell}</td>
                                                     ))}
                                                 </tr>
                                             ))}
@@ -348,14 +364,7 @@ const Connected = (props) => {
                                     </table>
                                 </Tab>
                             </Tabs>
-                            <input
-                                type="text"
-                                value={BetID}
-                                onChange={(event) => setBetID(event.target.value)}
-                                placeholder="Enter bet ID"
-                            />
-                            <button type="button" className="btn btn-secondary  btn-sm" onClick={acceptBet}>Accept Bet</button>
-                            <button type="button" className="btn btn-secondary  btn-sm" onClick={rejectBet}>Reject Bet</button>
+
                         </Card.Body>
                     </Card>
                 </Col>

@@ -1,0 +1,28 @@
+.action-section {
+    display: flex;
+    justify-content: flex-start;
+    /* Aligns items in the center vertically */
+    padding: 10px;
+    gap: 10px;
+    /* Provides space between children */
+}
+
+.input-box {
+    flex: 1;
+    /* Allows the input box to grow */
+    max-width: 200px;
+    /* Maximum width for the input box */
+}
+
+.button {
+    padding: 10px 20px;
+    /* Padding inside the buttons */
+    cursor: pointer;
+    /* Changes cursor to pointer on hover */
+    border: none;
+    /* Removes border */
+    background-color: #007bff;
+    /* Bootstrap primary color for example */
+    color: white;
+    /* Text color */
+}
