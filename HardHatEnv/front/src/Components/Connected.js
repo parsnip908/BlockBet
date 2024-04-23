@@ -38,6 +38,8 @@ const Connected = (props) => {
     const [OracleActiveList, setOracleActiveList] = useState([]);
     const [OracleCompleteList, setOracleCompleteList] = useState([]);
 
+    const [Refreshing, setRefreshing] = useState(false);
+
     const PendingHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
     const SentHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
     const ActiveHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
@@ -111,6 +113,12 @@ const Connected = (props) => {
 
     const placeBet = async () => {
         // handle the bet placement logic
+        if(props.account == betRecipient)
+        {
+            console.error("opponent is same as user");
+            alert("Cannot make a bet with yourself.")
+            return
+        }
         const trPosition = betPosition ? BetOutcome.TRUE : BetOutcome.FALSE;
         try {
             const options = {
@@ -130,6 +138,9 @@ const Connected = (props) => {
     };
 
     const updateLists = async () => {
+
+        setRefreshing(true);
+
         console.log(props.account);
         const betIndex = await contract.getBetInd();
         setBetInd_(betIndex.toNumber());
@@ -220,10 +231,10 @@ const Connected = (props) => {
                 await setActiveList(BetList => [...BetList, listObj]);
             }
             else if (gameStatus == GameStatus.COMPLETE) {
-                status = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
+                var winLoss = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
                 var result = (await contract.getOutcome(i)).toNumber();
                 result = (result == BetOutcome.TRUE) ? "True" : "False";
-                var listObj = [i, userWager, oppWager, des, result, status, oppAddr, OracleAddr];
+                var listObj = [i, userWager, oppWager, des, result, winLoss, oppAddr, OracleAddr];
                 console.log(listObj);
                 await setCompleteList(BetList => [...BetList, listObj]);
             }
@@ -234,6 +245,8 @@ const Connected = (props) => {
         console.log(CompleteList);
         console.log(OracleActiveList);
         console.log(OracleCompleteList);
+
+        setRefreshing(false);
     };
 
     function parseWei(wei)
@@ -257,7 +270,15 @@ const Connected = (props) => {
                 <br/>
                 Bet Count: {betInd} / 65536
             </p>
-            <button type="button" className="btn btn-secondary  btn-sm" style={{ marginBottom: '10px' }} onClick={updateLists}>Refresh</button>
+            <button
+                type="button"
+                className="btn btn-secondary  btn-sm"
+                style={{ marginBottom: '10px' }}
+                onClick={updateLists}
+                disabled={Refreshing}
+            >
+                Refresh
+            </button>
 
             <Row>
                 <Col>
