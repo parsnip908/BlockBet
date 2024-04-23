@@ -32,12 +32,14 @@ const Connected = (props) => {
 
     const [betInd, setBetInd_] = useState(0);
     const [PendingList, setPendingList] = useState([]);
+    const [SentList, setSentList] = useState([]);
     const [ActiveList, setActiveList] = useState([]);
     const [CompleteList, setCompleteList] = useState([]);
     const [OracleActiveList, setOracleActiveList] = useState([]);
     const [OracleCompleteList, setOracleCompleteList] = useState([]);
 
-    const PendingHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Status", "Opponent Address", "Oracle Address"];
+    const PendingHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
+    const SentHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
     const ActiveHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
     const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L", "Opponent Address", "Oracle Address"];
     const OracleActiveHeader = ["ID", "Description", "Status"];
@@ -67,7 +69,7 @@ const Connected = (props) => {
         } catch (error) {
             // const { reason } = await errorDecoder.decode(error);
             console.error("Failed to accept the bet:", error);
-            alert("Transcation failded: " + error.message)
+            alert("Transcation failed: " + error.message)
         }
     };
 
@@ -90,16 +92,16 @@ const Connected = (props) => {
 
     const postResult = async () => {
         const trResult = BetResult ? BetOutcome.TRUE : BetOutcome.FALSE;
-        try {
-            const txResponse = await contract.setBetOutcome(BetIDOracle, trResult)
-            await txResponse.wait();
-        } catch (error) {
-            console.error('Failed to set the outcome:', error);
-            alert(`Transaction failed: ${error.message}`);
-        }
+        // try {
+        //     const txResponse = await contract.setBetOutcome(BetIDOracle, trResult)
+        //     await txResponse.wait();
+        // } catch (error) {
+        //     console.error('Failed to set the outcome:', error);
+        //     alert(`Transaction failed: ${error.message}`);
+        // }
 
         try {
-            const txResponse2 = await contract.payout(BetIDOracle)
+            const txResponse2 = await contract.payout(BetIDOracle, trResult)
             await txResponse2.wait();
         } catch (error) {
             console.error('Failed to payout:', error);
@@ -186,7 +188,7 @@ const Connected = (props) => {
                 var oppWager = parseWei(await contract.getTakerBetAmount(i));
                 var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
                 var oppAddr = ethers.utils.base64.encode(TakerAddr);
-                var status = "Waiting";
+                var status = false;
             }
             else if (TakerAddr == props.account) {
                 var guess = await contract.getOriginatorGuess(i);
@@ -195,7 +197,7 @@ const Connected = (props) => {
                 var oppWager = parseWei(await contract.getOriginatorBetAmount(i));
                 var userStatus = (await contract.getTakerStatus(i)).toNumber();
                 var oppAddr = ethers.utils.base64.encode(OriginAddr);
-                var status = "Resp Req";
+                var status = true;
             }
             else continue;
 
@@ -204,9 +206,13 @@ const Connected = (props) => {
             OracleAddr = ethers.utils.base64.encode(OracleAddr)
 
             if (gameStatus == GameStatus.NOT_STARTED) {
-                var listObj = [i, userWager, oppWager, des, guess, status, oppAddr, OracleAddr];
+
+                var listObj = [i, userWager, oppWager, des, guess, oppAddr, OracleAddr];
                 console.log(listObj);
-                setPendingList(BetList => [...BetList, listObj]);
+                if(status)
+                    setPendingList(BetList => [...BetList, listObj]);
+                else
+                    setSentList(BetList => [...BetList, listObj]);
             }
             else if (gameStatus == GameStatus.STARTED) {
                 var listObj = [i, userWager, oppWager, des, guess, oppAddr, OracleAddr];
@@ -217,7 +223,7 @@ const Connected = (props) => {
                 status = (userStatus == BetterStatus.WIN) ? "Win" : "Lose";
                 var result = (await contract.getOutcome(i)).toNumber();
                 result = (result == BetOutcome.TRUE) ? "True" : "False";
-                var listObj = [i, userWager, des, result, status, oppAddr, OracleAddr];
+                var listObj = [i, userWager, oppWager, des, result, status, oppAddr, OracleAddr];
                 console.log(listObj);
                 await setCompleteList(BetList => [...BetList, listObj]);
             }
@@ -346,7 +352,7 @@ const Connected = (props) => {
                                 id="Bet-list-tabs"
                                 className="tabs"
                             >
-                                <Tab eventKey="pending" title="Pending">
+                                <Tab eventKey="pending" title="Incoming">
                                     <table className='betTable mt-3'>
                                         <thead>
                                             <tr>
@@ -381,6 +387,27 @@ const Connected = (props) => {
                                         <button type="button" className=" btn btn-secondary  btn-sm" style={{ marginLeft: '5px' }} onClick={rejectBet}>Reject Bet</button>
                                     </div>
 
+                                </Tab>
+                                <Tab eventKey="outgoing" title="Sent">
+                                    <table className='betTable mt-3'>
+                                        <thead>
+                                            <tr>
+                                                {SentHeader.map((header, index) => (
+                                                    <th key={index} className='px-3'>{header}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            {SentList.map((row, rowIndex) => (
+                                                <tr key={rowIndex}>
+                                                    {row.map((cell, cellIndex) => (
+                                                        <td key={cellIndex} className='px-3'>{cell}</td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </Tab>
                                 <Tab eventKey="active" title="Active">
                                     <table className='betTable mt-3'>

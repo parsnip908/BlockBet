@@ -1,6 +1,8 @@
 import abijson from './../contracts/BlockBet.json'
-const contractAddress = "0x74AF5A9E311ca2c6790a36c1BD4BDb09d0f8fba3"
-const contractAddressOLD = "0x9eB432e962fe21881248F900b2C40A46188462d6"
+
+const contractAddress = "0x6A24CC0c27DA313fB3ba6e5259bb36a5d5E6341e"
+					//  "0x74AF5A9E311ca2c6790a36c1BD4BDb09d0f8fba3"
+					//  "0x9eB432e962fe21881248F900b2C40A46188462d6"
 
 const contractAbi = require('./../contracts/BlockBet.json').abi;
 
