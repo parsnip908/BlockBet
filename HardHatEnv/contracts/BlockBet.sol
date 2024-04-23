@@ -131,24 +131,27 @@ contract BlockBet {
         games[betID].outcome = _outcome;    //set to 1(true) or 2(false)
         games[betID].status = STATUS_COMPLETE;
 
-        if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome){
-            games[betID].originator.status = STATUS_WIN;
-            games[betID].taker.status = STATUS_LOSE;
-        }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome){
-            games[betID].originator.status = STATUS_LOSE;
-            games[betID].taker.status = STATUS_WIN;
-        }else{
-            games[betID].originator.status = STATUS_ERROR;
-            games[betID].taker.status = STATUS_ERROR;
-            games[betID].status = STATUS_ERROR;
-        }
+        // if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome){
+        //     games[betID].originator.status = STATUS_WIN;
+        //     games[betID].taker.status = STATUS_LOSE;
+        // }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome){
+        //     games[betID].originator.status = STATUS_LOSE;
+        //     games[betID].taker.status = STATUS_WIN;
+        // }else{
+        //     games[betID].originator.status = STATUS_ERROR;
+        //     games[betID].taker.status = STATUS_ERROR;
+        //     games[betID].status = STATUS_ERROR;
+        // }
     }
 
     function payout(uint256 betID) public payable {
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
         require(games[betID].status == STATUS_COMPLETE, "game status is not complete");
 
-        if(games[betID].originator.status == STATUS_WIN) {
+        if(games[betID].originator.guess == games[betID].outcome && games[betID].taker.guess != games[betID].outcome) {
+            games[betID].originator.status = STATUS_WIN;
+            games[betID].taker.status = STATUS_LOSE;
+
             uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
             games[betID].originator.addr.transfer(winnings);
 
@@ -158,7 +161,10 @@ contract BlockBet {
                 winnings,
                 games[betID].originator.addr
             );
-        }else if(games[betID].taker.status == STATUS_WIN) {
+        }else if(games[betID].originator.guess != games[betID].outcome && games[betID].taker.guess == games[betID].outcome) {
+            games[betID].originator.status = STATUS_LOSE;
+            games[betID].taker.status = STATUS_WIN;
+
             uint256 winnings = games[betID].originator.betAmount + games[betID].taker.betAmount;
             games[betID].taker.addr.transfer(winnings);
             
@@ -169,6 +175,10 @@ contract BlockBet {
                 games[betID].taker.addr
             );
         }else{
+            games[betID].originator.status = STATUS_ERROR;
+            games[betID].taker.status = STATUS_ERROR;
+            games[betID].status = STATUS_VOIDED;
+
             uint256 originatorWinnings = games[betID].originator.betAmount;
             uint256 takerWinnings = games[betID].taker.betAmount;
             games[betID].originator.addr.transfer(originatorWinnings);
@@ -191,7 +201,10 @@ contract BlockBet {
 
     function nullBet(uint256 betID) public payable {   //currently only oracle can nullify bet, need to figure out frontend logistics on voting to nulltify bet
         require(msg.sender == games[betID].oracle, "oracle address is incorrect");
-
+        games[betID].originator.status = STATUS_ERROR;
+        games[betID].taker.status = STATUS_ERROR;
+        games[betID].status = STATUS_VOIDED;
+        
         uint256 originatorWinnings = games[betID].originator.betAmount;
         uint256 takerWinnings = games[betID].taker.betAmount;
         games[betID].originator.addr.transfer(originatorWinnings);
@@ -211,7 +224,7 @@ contract BlockBet {
         );
     }
 
-    function checkPermissions(uint256 betID, address sender) view private {
+    function checkPermissions(uint256 betID, address sender) view public {
         //only the originator, taker, or oracle can call this function
         require(sender == games[betID].originator.addr || sender == games[betID].taker.addr || sender == games[betID].oracle, "must be originator, taker, or oracle address");
     }
@@ -230,7 +243,7 @@ contract BlockBet {
     }
 
     function getGameStatus(uint256 betID) public view returns (uint256) {
-        checkPermissions(betID, msg.sender);
+        // checkPermissions(betID, msg.sender);
         return games[betID].status;
     }
     function getOriginatorStatus(uint256 betID) public view returns (uint256) {
@@ -243,15 +256,15 @@ contract BlockBet {
     }
 
     function getOriginatorAddress(uint256 betID) public view returns (address) {
-        checkPermissions(betID, msg.sender);
+        // checkPermissions(betID, msg.sender);
         return games[betID].originator.addr;
     }
     function getTakerAddress(uint256 betID) public view returns (address) {
-        checkPermissions(betID, msg.sender);
+        // checkPermissions(betID, msg.sender);
         return games[betID].taker.addr;
     }
     function getOracleAddress(uint256 betID) public view returns (address) {
-        checkPermissions(betID, msg.sender);
+        // checkPermissions(betID, msg.sender);
         return games[betID].oracle;
     }
 
