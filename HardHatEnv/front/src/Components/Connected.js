@@ -47,9 +47,11 @@ const Connected = (props) => {
     const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L", "Opponent Address", "Oracle Address"];
     const OracleActiveHeader = ["ID", "Description", "Status"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
+    const portfolioHeader = ["MetaMask Account", "Current Balance", "Bet count"]
 
     const pow15 = (ethers.BigNumber.from(10)).pow(15);
     const pow6 = (ethers.BigNumber.from(10)).pow(6);
+
 
     const acceptBet = async () => {
         // check if it is a valid ID
@@ -285,12 +287,12 @@ const Connected = (props) => {
             <h1>
                 BlockBet
             </h1>
-            <p>
+            {/* <p>
                 MetaMask account address: {truncateAddress(props.account)}
                 <span role="button" onClick={copyToClipboard(props.account)}><FaCopy /></span>
             </p>
-            <p>MetaMask Balance: {props.balance} </p>
-            <p>Bet Count: {betInd} / 65536</p>
+            <p>MetaMask Balance: {props.balance} MIS </p>
+            <p>Bet Count: {betInd} / 65536</p> */}
             <button
                 type="button"
                 className="btn btn-secondary  btn-sm"
@@ -300,6 +302,32 @@ const Connected = (props) => {
             >
                 Refresh
             </button>
+            <Row>
+                <Col>
+                    <Card>
+                        <CardHeader as="h5">Portfolio</CardHeader>
+                        <CardBody>
+                            <table className='betTable mt-3'>
+                                <thead>
+                                    <tr>
+                                        {portfolioHeader.map((header, index) => (
+                                            <th key={index} className='px-3'>{header}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{truncateAddress(props.account)}
+                                            <span role="button" onClick={copyToClipboard(props.account)}><FaCopy /></span></td>
+                                        <td>{props.balance} MIS </td>
+                                        <td>{betInd} / 65536</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </CardBody>
+                    </Card>
+                </Col>
+            </Row>
             <Row>
                 <Col>
                     <Card className='mb-4'>
@@ -408,8 +436,8 @@ const Connected = (props) => {
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
                                                         <td key={cellIndex} className='px-3'>
-                                                            {cell}
-                                                            {(cell.type === 'oppAddr' || cell.type === 'OracleAddr') && (
+                                                            {cellIndex === 5 || cellIndex === 6 ? truncateAddress(cell) : cell}
+                                                            {(cellIndex === 5 || cellIndex === 6) && (
                                                                 <span role="button" onClick={() => copyToClipboard(cell)}>
                                                                     <FaCopy />
                                                                 </span>
@@ -478,7 +506,14 @@ const Connected = (props) => {
                                             {ActiveList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex} className='px-3'>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>
+                                                            {cellIndex === 5 || cellIndex === 6 ? truncateAddress(cell) : cell}
+                                                            {(cellIndex === 5 || cellIndex === 6) && (
+                                                                <span role="button" onClick={() => copyToClipboard(cell)}>
+                                                                    <FaCopy />
+                                                                </span>
+                                                            )}
+                                                        </td>
                                                     ))}
                                                 </tr>
                                             ))}
@@ -499,7 +534,14 @@ const Connected = (props) => {
                                             {CompleteList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex} className='px-3'>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>
+                                                            {cellIndex === 6 || cellIndex === 7 ? truncateAddress(cell) : cell}
+                                                            {(cellIndex === 6 || cellIndex === 7) && (
+                                                                <span role="button" onClick={() => copyToClipboard(cell)}>
+                                                                    <FaCopy />
+                                                                </span>
+                                                            )}
+                                                        </td>
                                                     ))}
                                                 </tr>
                                             ))}
