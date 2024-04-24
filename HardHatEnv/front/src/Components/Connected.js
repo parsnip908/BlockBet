@@ -1,5 +1,6 @@
 import React from 'react'
 import { useState, useEffect } from "react";
+import { FaCopy } from "react-icons/fa";
 import { ethers } from "ethers";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, CardBody, CardHeader } from 'react-bootstrap'
@@ -136,6 +137,10 @@ const Connected = (props) => {
         // Reset wager after placing the bet
         setTakerWager('');
         setOriginWager('');
+        setBetDes('');
+        setOracleAddress('');
+        setRecipient('');
+        setSentList('');
     };
 
     const updateLists = async () => {
@@ -199,7 +204,8 @@ const Connected = (props) => {
                 var userWager = parseWei(await contract.getOriginatorBetAmount(i));
                 var oppWager = parseWei(await contract.getTakerBetAmount(i));
                 var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
-                var oppAddr = ethers.utils.base64.encode(TakerAddr);
+                // var oppAddr = ethers.utils.base64.encode(TakerAddr);
+                var oppAddr = TakerAddr;
                 var status = false;
             }
             else if (TakerAddr == props.account) {
@@ -208,14 +214,16 @@ const Connected = (props) => {
                 var userWager = parseWei(await contract.getTakerBetAmount(i));
                 var oppWager = parseWei(await contract.getOriginatorBetAmount(i));
                 var userStatus = (await contract.getTakerStatus(i)).toNumber();
-                var oppAddr = ethers.utils.base64.encode(OriginAddr);
+                // var oppAddr = ethers.utils.base64.encode(OriginAddr);
+                var oppAddr = OriginAddr;
                 var status = true;
             }
             else continue;
 
             console.log(userWager);
             console.log(userStatus);
-            OracleAddr = ethers.utils.base64.encode(OracleAddr)
+            // OracleAddr = ethers.utils.base64.encode(OracleAddr)
+            // OracleAddr = truncateAddress(OracleAddr);
 
             if (gameStatus == GameStatus.NOT_STARTED) {
 
@@ -263,8 +271,8 @@ const Connected = (props) => {
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     };
 
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(props.account).then(() => {
+    const copyToClipboard = (account) => {
+        navigator.clipboard.writeText(account).then(() => {
             // Handle the success case - show a message or change the state.
             console.log('Address copied to clipboard!');
         }).catch(err => {
@@ -277,7 +285,11 @@ const Connected = (props) => {
             <h1>
                 BlockBet
             </h1>
-            <p>MetaMask account address <br /> {props.account} <br /> {ethers.utils.base64.encode(props.account)}</p>
+            <p>
+                MetaMask account address: {truncateAddress(props.account)}
+                <span role="button" onClick={copyToClipboard(props.account)}><FaCopy /></span>
+            </p>
+            <p>MetaMask Balance: {props.balance} </p>
             <p>Bet Count: {betInd} / 65536</p>
             <button
                 type="button"
@@ -395,7 +407,14 @@ const Connected = (props) => {
                                             {PendingList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex} className='px-3'>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>
+                                                            {cell}
+                                                            {(cell.type === 'oppAddr' || cell.type === 'OracleAddr') && (
+                                                                <span role="button" onClick={() => copyToClipboard(cell)}>
+                                                                    <FaCopy />
+                                                                </span>
+                                                            )}
+                                                        </td>
                                                     ))}
                                                 </tr>
                                             ))}
@@ -431,7 +450,14 @@ const Connected = (props) => {
                                             {SentList.map((row, rowIndex) => (
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
-                                                        <td key={cellIndex} className='px-3'>{cell}</td>
+                                                        <td key={cellIndex} className='px-3'>
+                                                            {cellIndex === 5 || cellIndex === 6 ? truncateAddress(cell) : cell}
+                                                            {(cellIndex === 5 || cellIndex === 6) && (
+                                                                <span role="button" onClick={() => copyToClipboard(cell)}>
+                                                                    <FaCopy />
+                                                                </span>
+                                                            )}
+                                                        </td>
                                                     ))}
                                                 </tr>
                                             ))}
