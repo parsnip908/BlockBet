@@ -45,7 +45,7 @@ const Connected = (props) => {
     const SentHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
     const ActiveHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Position", "Opponent Address", "Oracle Address"];
     const CompleteHeader = ["ID", "My Wager", "Opponent Wager", "Description", "Result", "W/L", "Opponent Address", "Oracle Address"];
-    const OracleActiveHeader = ["ID", "Description", "Status"];
+    const OracleActiveHeader = ["ID", "Description"];
     const OracleCompleteHeader = ["ID", "Description", "Result"];
     const portfolioHeader = ["MetaMask Account", "Current Balance", "Bet count"]
 
@@ -73,7 +73,6 @@ const Connected = (props) => {
             setBetID('');
 
         } catch (error) {
-            // const { reason } = await errorDecoder.decode(error);
             console.error("Failed to accept the bet:", error);
             alert("Transcation failed: " + error.message)
         }
@@ -147,12 +146,15 @@ const Connected = (props) => {
 
     const updateLists = async () => {
 
-        setRefreshing(true);
+        while(Refreshing);
+        await setRefreshing(true);
+
+        console.log("Refreshing");
 
         console.log(props.account);
-        const betIndex = await contract.getBetInd();
-        setBetInd_(betIndex.toNumber());
-        console.log(betIndex.toNumber());
+        const betIndex = (await contract.getBetInd()).toNumber();
+        setBetInd_(betIndex);
+        console.log(betIndex);
 
         // reset lists
         setPendingList([]);
@@ -185,11 +187,11 @@ const Connected = (props) => {
 
             if (OracleAddr == props.account) {
                 if (gameStatus == GameStatus.NOT_STARTED) {
-                    var listObj = [i, des, "Waiting"];
-                    await setOracleActiveList(BetList => [...BetList, listObj]);
+                    // var listObj = [i, des, "Waiting"];
+                    // await setOracleActiveList(BetList => [...BetList, listObj]);
                 }
                 else if (gameStatus == GameStatus.STARTED) {
-                    var listObj = [i, des, "Resp Req"];
+                    var listObj = [i, des]; // , "Resp Req"
                     await setOracleActiveList(BetList => [...BetList, listObj]);
                 }
                 else if (gameStatus == GameStatus.COMPLETE) {
@@ -206,7 +208,6 @@ const Connected = (props) => {
                 var userWager = parseWei(await contract.getOriginatorBetAmount(i));
                 var oppWager = parseWei(await contract.getTakerBetAmount(i));
                 var userStatus = (await contract.getOriginatorStatus(i)).toNumber();
-                // var oppAddr = ethers.utils.base64.encode(TakerAddr);
                 var oppAddr = TakerAddr;
                 var status = false;
             }
@@ -216,7 +217,6 @@ const Connected = (props) => {
                 var userWager = parseWei(await contract.getTakerBetAmount(i));
                 var oppWager = parseWei(await contract.getOriginatorBetAmount(i));
                 var userStatus = (await contract.getTakerStatus(i)).toNumber();
-                // var oppAddr = ethers.utils.base64.encode(OriginAddr);
                 var oppAddr = OriginAddr;
                 var status = true;
             }
@@ -224,7 +224,6 @@ const Connected = (props) => {
 
             console.log(userWager);
             console.log(userStatus);
-            // OracleAddr = ethers.utils.base64.encode(OracleAddr)
             // OracleAddr = truncateAddress(OracleAddr);
 
             if (gameStatus == GameStatus.NOT_STARTED) {
@@ -232,9 +231,9 @@ const Connected = (props) => {
                 var listObj = [i, userWager, oppWager, des, guess, oppAddr, OracleAddr];
                 console.log(listObj);
                 if (status)
-                    setPendingList(BetList => [...BetList, listObj]);
+                    await setPendingList(BetList => [...BetList, listObj]);
                 else
-                    setSentList(BetList => [...BetList, listObj]);
+                    await setSentList(BetList => [...BetList, listObj]);
             }
             else if (gameStatus == GameStatus.STARTED) {
                 var listObj = [i, userWager, oppWager, des, guess, oppAddr, OracleAddr];
@@ -261,9 +260,9 @@ const Connected = (props) => {
     };
 
     function parseWei(wei) {
-        if (wei >= pow15)
+        if (pow15.lte(wei))
             return ethers.utils.formatUnits(wei, 18) + ' eth';
-        else if (wei >= pow6)
+        else if (pow6.lte(wei))
             return ethers.utils.formatUnits(wei, 9) + ' gwei';
         else
             return wei.toString() + ' wei';
@@ -276,14 +275,14 @@ const Connected = (props) => {
     const copyToClipboard = (account) => {
         navigator.clipboard.writeText(account).then(() => {
             // Handle the success case - show a message or change the state.
-            console.log('Address copied to clipboard!');
+            console.log('Address copied to clipboard!', account);
         }).catch(err => {
             // Handle the error case
             console.error('Failed to copy address: ', err);
         });
     };
     return (
-        <Container>
+        <Container style={{ paddingTop: '30px', paddingBottom: '30px' }}>
             <h1>
                 BlockBet
             </h1>
@@ -297,14 +296,14 @@ const Connected = (props) => {
                 type="button"
                 className="btn btn-secondary  btn-sm"
                 style={{ marginBottom: '10px' }}
-                onClick={updateLists}
+                onClick={() => updateLists()}
                 disabled={Refreshing}
             >
                 Refresh
             </button>
             <Row>
                 <Col>
-                    <Card>
+                    <Card className='mb-4'>
                         <CardHeader as="h5">Portfolio</CardHeader>
                         <CardBody>
                             <table className='betTable mt-3'>
@@ -318,7 +317,7 @@ const Connected = (props) => {
                                 <tbody>
                                     <tr>
                                         <td>{truncateAddress(props.account)}
-                                            <span role="button" onClick={copyToClipboard(props.account)}><FaCopy /></span></td>
+                                            <span role="button" className='copyButton' onClick={() => copyToClipboard(props.account)}><FaCopy /></span></td>
                                         <td>{props.balance} MIS </td>
                                         <td>{betInd} / 65536</td>
                                     </tr>
@@ -411,7 +410,7 @@ const Connected = (props) => {
                 </Col>
             </Row>
 
-            <Row className="my-4">
+            <Row>
                 <Col>
                     <Card className='mb-4'>
                         <Card.Header as="h5">Bet List</Card.Header>
@@ -438,7 +437,7 @@ const Connected = (props) => {
                                                         <td key={cellIndex} className='px-3'>
                                                             {cellIndex === 5 || cellIndex === 6 ? truncateAddress(cell) : cell}
                                                             {(cellIndex === 5 || cellIndex === 6) && (
-                                                                <span role="button" onClick={() => copyToClipboard(cell)}>
+                                                                <span role="button" className='copyButton' onClick={() => copyToClipboard(cell)}>
                                                                     <FaCopy />
                                                                 </span>
                                                             )}
@@ -553,7 +552,7 @@ const Connected = (props) => {
                     </Card>
                 </Col>
             </Row>
-            <Row className="mb-5">
+            <Row>
                 <Col>
                     <Card className='mb-4'>
                         <Card.Header as="h5">Oracle List</Card.Header>
@@ -637,8 +636,6 @@ const Connected = (props) => {
                                     </table>
                                 </Tab>
                             </Tabs>
-
-
                         </Card.Body>
                     </Card>
                 </Col>
