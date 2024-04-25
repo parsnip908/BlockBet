@@ -146,7 +146,7 @@ const Connected = (props) => {
 
     const updateLists = async () => {
 
-        while(Refreshing);
+        while (Refreshing);
         await setRefreshing(true);
 
         console.log("Refreshing");
@@ -301,6 +301,7 @@ const Connected = (props) => {
             >
                 Refresh
             </button>
+
             <Row>
                 <Col>
                     <Card className='mb-4'>
@@ -331,80 +332,108 @@ const Connected = (props) => {
                 <Col>
                     <Card className='mb-4'>
                         <CardHeader as="h5">Create Bet</CardHeader>
-                        <CardBody>
-                            <div className="mb-1">
-                                <input
-                                    type="number"
-                                    value={OriginWager}
-                                    onChange={(event) => setOriginWager(event.target.value)}
-                                    placeholder="Enter your wager"
-                                    style={{ marginRight: '5px' }}
-                                />
-                                <select value={OrignUnit} onChange={(event) => setOrignUnit(event.target.value)}>
-                                    <option value='ether'>eth</option>
-                                    <option value='gwei'>gwei</option>
-                                    <option value='wei'>wei</option>
-                                </select>
-                            </div>
-                            <div className="mb-1">
-                                <input
-                                    type="number"
-                                    value={TakerWager}
-                                    onChange={(event) => setTakerWager(event.target.value)}
-                                    placeholder="Enter opponent wager"
-                                    style={{ marginRight: '5px' }}
-                                />
-                                <select value={TakerUnit} onChange={(event) => setTakerUnit(event.target.value)}>
-                                    <option value='ether'>eth</option>
-                                    <option value='gwei'>gwei</option>
-                                    <option value='wei'>wei</option>
-                                </select>
-                            </div>
-                            <div className="mb-1">
-                                <input
-                                    type="text"
-                                    value={betDes}
-                                    onChange={(event) => setBetDes(event.target.value)}
-                                    placeholder="Enter bet description"
-                                />
-                            </div>
-                            <div className="mb-2">
-                                <label>Result:</label>
-                                <input
-                                    type="radio"
-                                    id="BetPositionTrue"
-                                    checked={betPosition === true}
-                                    onChange={(event) => setBetPosition(true)}
-                                    className='radio'
-                                />
-                                <label>True</label>
-                                <input
-                                    type="radio"
-                                    id="BetPositionFalse"
-                                    checked={betPosition === false}
-                                    onChange={(event) => setBetPosition(false)}
-                                    className='radio'
-                                />
-                                <label>False</label><br />
-                            </div>
-                            <div className="mb-1">
-                                <input
-                                    type="text"
-                                    value={betRecipient}
-                                    onChange={(event) => setRecipient(event.target.value)}
-                                    placeholder="Enter opponent address"
-                                />
-                            </div>
-                            <div className="mb-1">
-                                <input
-                                    type="text"
-                                    value={oracleAdress}
-                                    onChange={(event) => setOracleAddress(event.target.value)}
-                                    placeholder="Enter oracle address"
-                                />
-                            </div>
-                            <button type="button" className="btn btn-secondary  btn-sm" style={{ marginTop: '10px' }} onClick={placeBet}>Place Bet</button>
+                        <CardBody className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+                            <form>
+                                <div className="row mb-1">
+                                    <div className="col-8">
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={OriginWager}
+                                            onChange={(event) => setOriginWager(event.target.value)}
+                                            placeholder="Enter your wager"
+                                        />
+                                    </div>
+                                    <div className="col-auto">
+                                        <select
+                                            className="form-select"
+                                            value={OrignUnit}
+                                            onChange={(event) => setOrignUnit(event.target.value)}
+                                        >
+                                            <option value='ether'>eth</option>
+                                            <option value='gwei'>gwei</option>
+                                            <option value='wei'>wei</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="row mb-1">
+                                    <div className="col-8">
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={TakerWager}
+                                            onChange={(event) => setTakerWager(event.target.value)}
+                                            placeholder="Enter opponent wager"
+                                        />
+                                    </div>
+                                    <div className="col-auto">
+                                        <select
+                                            className="form-select"
+                                            value={TakerUnit}
+                                            onChange={(event) => setTakerUnit(event.target.value)}
+                                        >
+                                            <option value='ether'>eth</option>
+                                            <option value='gwei'>gwei</option>
+                                            <option value='wei'>wei</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="mb-1 col-14">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={betDes}
+                                        onChange={(event) => setBetDes(event.target.value)}
+                                        placeholder="Enter bet description"
+                                    />
+                                </div>
+                                <div className="mb-1">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={betRecipient}
+                                        onChange={(event) => setRecipient(event.target.value)}
+                                        placeholder="Enter opponent address"
+                                    />
+                                </div>
+                                <div className="mb-1">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={oracleAdress}
+                                        onChange={(event) => setOracleAddress(event.target.value)}
+                                        placeholder="Enter oracle address"
+                                    />
+                                </div>
+                                <div className="mb-2">
+                                    <div>
+                                        <label>Result:</label>
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                type="radio"
+                                                id="BetPositionTrue"
+                                                className="form-check-input"
+                                                checked={betPosition === true}
+                                                onChange={(event) => setBetPosition(true)}
+                                            />
+                                            <label className="form-check-label" htmlFor="BetPositionTrue">True</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                type="radio"
+                                                id="BetPositionFalse"
+                                                className="form-check-input"
+                                                checked={betPosition === false}
+                                                onChange={(event) => setBetPosition(false)}
+                                            />
+                                            <label className="form-check-label" htmlFor="BetPositionFalse">False</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: '10px' }} onClick={placeBet}>Place Bet</button>
+                            </form>
                         </CardBody>
+
 
                     </Card>
                 </Col>
@@ -435,9 +464,9 @@ const Connected = (props) => {
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
                                                         <td key={cellIndex} className='px-3'>
-                                                            {cellIndex === 5 || cellIndex === 6 ? truncateAddress(cell) : cell}
-                                                            {(cellIndex === 5 || cellIndex === 6) && (
-                                                                <span role="button" className='copyButton' onClick={() => copyToClipboard(cell)}>
+                                                            {cell}
+                                                            {(cell.type === 'oppAddr' || cell.type === 'OracleAddr') && (
+                                                                <span role="button" onClick={() => copyToClipboard(cell)}>
                                                                     <FaCopy />
                                                                 </span>
                                                             )}
