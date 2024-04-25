@@ -47,6 +47,9 @@ function App() {
     }
   };
 
+  const updateBalance = async () => {
+    setBalance(ethers.utils.formatEther(await provider.getBalance(account)));
+  }
 
   return (
     <div className="App bg-light">
@@ -55,6 +58,7 @@ function App() {
           account={account}
           contract={contract}
           balance={balance}
+          updateBalance={updateBalance}
         />)
         : (<Login connectWallet={connectMetaMask} />)}
     </div>

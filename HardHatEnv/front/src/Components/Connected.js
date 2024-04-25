@@ -141,7 +141,6 @@ const Connected = (props) => {
         setBetDes('');
         setOracleAddress('');
         setRecipient('');
-        setSentList('');
     };
 
     const updateLists = async () => {
@@ -150,6 +149,8 @@ const Connected = (props) => {
         await setRefreshing(true);
 
         console.log("Refreshing");
+        
+        props.updateBalance();
 
         console.log(props.account);
         const betIndex = (await contract.getBetInd()).toNumber();
@@ -158,6 +159,7 @@ const Connected = (props) => {
 
         // reset lists
         setPendingList([]);
+        setSentList([]);
         setActiveList([]);
         setCompleteList([]);
         setOracleActiveList([]);
@@ -464,8 +466,8 @@ const Connected = (props) => {
                                                 <tr key={rowIndex}>
                                                     {row.map((cell, cellIndex) => (
                                                         <td key={cellIndex} className='px-3'>
-                                                            {cell}
-                                                            {(cell.type === 'oppAddr' || cell.type === 'OracleAddr') && (
+                                                            {cellIndex === 5 || cellIndex === 6 ? truncateAddress(cell) : cell}
+                                                            {(cellIndex === 5 || cellIndex === 6) && (
                                                                 <span role="button" onClick={() => copyToClipboard(cell)}>
                                                                     <FaCopy />
                                                                 </span>
